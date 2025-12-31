@@ -10,52 +10,52 @@
         'admin' => [
             // Main items (shown in bottom nav)
             'main' => [
-                ['route' => 'admin.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
-                ['route' => 'sekretaris.dashboard', 'icon' => 'users', 'label' => 'Sekretaris', 'key' => 'sekretaris'],
-                ['route' => 'bendahara.dashboard', 'icon' => 'dollar-sign', 'label' => 'Bendahara', 'key' => 'bendahara'],
+                ['route_name' => 'admin.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
+                ['route_name' => 'sekretaris.dashboard', 'icon' => 'users', 'label' => 'Sekretaris', 'key' => 'sekretaris'],
+                ['route_name' => 'bendahara.dashboard', 'icon' => 'dollar-sign', 'label' => 'Bendahara', 'key' => 'bendahara'],
             ],
             'more' => [
-                ['route' => 'pendidikan.dashboard', 'icon' => 'book-open', 'label' => 'Pendidikan', 'key' => 'pendidikan'],
-                ['route' => 'backup.download', 'icon' => 'database', 'label' => 'Backup Data', 'key' => 'backup'],
-                ['route' => 'logout', 'icon' => 'log-out', 'label' => 'Logout', 'key' => 'logout', 'is_form' => true],
+                ['route_name' => 'pendidikan.dashboard', 'icon' => 'book-open', 'label' => 'Pendidikan', 'key' => 'pendidikan'],
+                ['route_name' => 'backup.download', 'icon' => 'database', 'label' => 'Backup Data', 'key' => 'backup'],
+                ['route_name' => 'logout', 'icon' => 'log-out', 'label' => 'Logout', 'key' => 'logout', 'is_form' => true],
             ],
         ],
         'sekretaris' => [
             'main' => [
-                ['route' => 'sekretaris.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
-                ['route' => 'sekretaris.data-santri', 'icon' => 'users', 'label' => 'Santri', 'key' => 'santri'],
-                ['route' => 'sekretaris.mutasi-santri', 'icon' => 'shuffle', 'label' => 'Mutasi', 'key' => 'mutasi'],
+                ['route_name' => 'sekretaris.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
+                ['route_name' => 'sekretaris.data-santri', 'icon' => 'users', 'label' => 'Santri', 'key' => 'santri'],
+                ['route_name' => 'sekretaris.mutasi-santri', 'icon' => 'shuffle', 'label' => 'Mutasi', 'key' => 'mutasi'],
             ],
             'more' => [
-                ['route' => 'sekretaris.kenaikan-kelas', 'icon' => 'trending-up', 'label' => 'Kenaikan Kelas', 'key' => 'kenaikan'],
-                ['route' => 'sekretaris.perpindahan', 'icon' => 'move', 'label' => 'Perpindahan', 'key' => 'perpindahan'],
-                ['route' => 'sekretaris.laporan', 'icon' => 'file-text', 'label' => 'Laporan', 'key' => 'laporan'],
+                ['route_name' => 'sekretaris.kenaikan-kelas', 'icon' => 'trending-up', 'label' => 'Kenaikan Kelas', 'key' => 'kenaikan'],
+                ['route_name' => 'sekretaris.perpindahan', 'icon' => 'move', 'label' => 'Perpindahan', 'key' => 'perpindahan'],
+                ['route_name' => 'sekretaris.laporan', 'icon' => 'file-text', 'label' => 'Laporan', 'key' => 'laporan'],
             ],
         ],
         'bendahara' => [
             'main' => [
-                ['route' => 'bendahara.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
-                ['route' => 'bendahara.syahriah', 'icon' => 'credit-card', 'label' => 'Syahriah', 'key' => 'syahriah'],
-                ['route' => 'bendahara.pemasukan', 'icon' => 'trending-up', 'label' => 'Pemasukan', 'key' => 'pemasukan'],
+                ['route_name' => 'bendahara.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
+                ['route_name' => 'bendahara.syahriah', 'icon' => 'credit-card', 'label' => 'Syahriah', 'key' => 'syahriah'],
+                ['route_name' => 'bendahara.pemasukan', 'icon' => 'trending-up', 'label' => 'Pemasukan', 'key' => 'pemasukan'],
             ],
             'more' => [
-                ['route' => 'bendahara.pengeluaran', 'icon' => 'trending-down', 'label' => 'Pengeluaran', 'key' => 'pengeluaran'],
-                ['route' => 'bendahara.pegawai', 'icon' => 'users', 'label' => 'Pegawai', 'key' => 'pegawai'],
-                ['route' => 'bendahara.gaji', 'icon' => 'dollar-sign', 'label' => 'Gaji', 'key' => 'gaji'],
-                ['route' => 'bendahara.laporan', 'icon' => 'file-text', 'label' => 'Laporan', 'key' => 'laporan'],
+                ['route_name' => 'bendahara.pengeluaran', 'icon' => 'trending-down', 'label' => 'Pengeluaran', 'key' => 'pengeluaran'],
+                ['route_name' => 'bendahara.pegawai', 'icon' => 'users', 'label' => 'Pegawai', 'key' => 'pegawai'],
+                ['route_name' => 'bendahara.gaji', 'icon' => 'dollar-sign', 'label' => 'Gaji', 'key' => 'gaji'],
+                ['route_name' => 'bendahara.laporan', 'icon' => 'file-text', 'label' => 'Laporan', 'key' => 'laporan'],
             ],
         ],
         'pendidikan' => [
             'main' => [
-                ['route' => 'pendidikan.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
-                ['route' => 'pendidikan.nilai', 'icon' => 'edit-3', 'label' => 'Nilai', 'key' => 'nilai'],
-                ['route' => 'pendidikan.laporan', 'icon' => 'file-text', 'label' => 'E-Rapor', 'key' => 'rapor'],
+                ['route_name' => 'pendidikan.dashboard', 'icon' => 'home', 'label' => 'Dashboard', 'key' => 'dashboard'],
+                ['route_name' => 'pendidikan.nilai', 'icon' => 'edit-3', 'label' => 'Nilai', 'key' => 'nilai'],
+                ['route_name' => 'pendidikan.laporan', 'icon' => 'file-text', 'label' => 'E-Rapor', 'key' => 'rapor'],
             ],
             'more' => [
-                ['route' => 'pendidikan.ijazah', 'icon' => 'award', 'label' => 'Ijazah', 'key' => 'ijazah'],
-                ['route' => 'pendidikan.absensi', 'icon' => 'check-circle', 'label' => 'Absensi', 'key' => 'absensi'],
-                ['route' => 'pendidikan.mapel', 'icon' => 'book', 'label' => 'Mata Pelajaran', 'key' => 'mapel'],
-                ['route' => 'pendidikan.jadwal', 'icon' => 'calendar', 'label' => 'Jadwal', 'key' => 'jadwal'],
+                ['route_name' => 'pendidikan.ijazah', 'icon' => 'award', 'label' => 'Ijazah', 'key' => 'ijazah'],
+                ['route_name' => 'pendidikan.absensi', 'icon' => 'check-circle', 'label' => 'Absensi', 'key' => 'absensi'],
+                ['route_name' => 'pendidikan.mapel', 'icon' => 'book', 'label' => 'Mata Pelajaran', 'key' => 'mapel'],
+                ['route_name' => 'pendidikan.jadwal', 'icon' => 'calendar', 'label' => 'Jadwal', 'key' => 'jadwal'],
             ],
         ],
     ];
@@ -68,7 +68,7 @@
     {{-- Main Navigation Items --}}
     @foreach($mainItems as $item)
         <li class="bottom-nav-item">
-            <a href="{{ route($item['route']) }}" class="bottom-nav-link {{ $active === $item['key'] ? 'active' : '' }}">
+            <a href="{{ route($item['route_name']) }}" class="bottom-nav-link {{ $active === $item['key'] ? 'active' : '' }}">
                 <div class="bottom-nav-icon">
                     <i data-feather="{{ $item['icon'] }}" style="width: 20px; height: 20px;"></i>
                 </div>
@@ -199,7 +199,7 @@
     <div class="bottom-sheet-menu">
         @foreach($moreItems as $item)
             @if(isset($item['is_form']) && $item['is_form'])
-                <form method="POST" action="{{ route($item['route']) }}" style="margin: 0;">
+                <form method="POST" action="{{ route($item['route_name']) }}" style="margin: 0;">
                     @csrf
                     <button type="submit" class="bottom-sheet-item" style="width: 100%; border: none; background: none; cursor: pointer;">
                         <div class="bottom-sheet-icon" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">
@@ -209,7 +209,7 @@
                     </button>
                 </form>
             @else
-                <a href="{{ route($item['route']) }}" class="bottom-sheet-item">
+                <a href="{{ route($item['route_name']) }}" class="bottom-sheet-item">
                     <div class="bottom-sheet-icon">
                         <i data-feather="{{ $item['icon'] }}" style="width: 20px; height: 20px;"></i>
                     </div>
