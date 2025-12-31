@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\MidtransController;
 // Talaran Santri Module Routes
 Route::prefix('talaran')->name('talaran.')->middleware(['auth', 'role:pendidikan'])->group(function () {
     Route::get('/', [App\Http\Controllers\TalaranController::class, 'index'])->name('index');

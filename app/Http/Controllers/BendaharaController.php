@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class BendaharaController extends Controller
 {
@@ -509,8 +510,9 @@ class BendaharaController extends Controller
                     $request->kategori_lain ?? $validated['kategori'],
                     str_replace('.', '', $request->nominal), // Raw nominal
                     $validated['tanggal'],
+                    $validated['tanggal'],
                     $validated['keterangan'] ?? '-',
-                    auth()->user()->name
+                    Auth::user()->name ?? 'Admin'
                 );
             }
         } catch (\Exception $e) {
@@ -614,8 +616,9 @@ class BendaharaController extends Controller
                     $request->kategori_lain ?? $validated['kategori'],
                     str_replace('.', '', $request->nominal), // Raw nominal
                     $validated['tanggal'],
+                    $validated['tanggal'],
                     $validated['keterangan'] ?? '-',
-                    auth()->user()->name
+                    Auth::user()->name ?? 'Admin'
                 );
             }
         } catch (\Exception $e) {
