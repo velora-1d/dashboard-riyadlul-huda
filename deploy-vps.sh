@@ -5,7 +5,7 @@
 
 # CONFIGURATION
 DOMAIN="riyadlulhuda.my.id"  # ✅ DOMAIN BARU (Updated)
-VPS_IP="109.111.53.245"      # ✅ IP SUDAH DISET
+VPS_IP="72.62.124.123"      # ✅ IP SUDAH DISET
 DB_PASSWORD="buat_password_db_baru" # 🔴 GANTI DENGAN PASSWORD BARU
 
 set -e  # Exit on any error
