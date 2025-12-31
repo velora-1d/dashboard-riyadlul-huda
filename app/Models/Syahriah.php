@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class Syahriah extends Model
 {
+    use LogsActivity;
+    
     protected $table = 'syahriah';
     
     protected $fillable = [
