@@ -42,6 +42,20 @@
     @endif
 
     <div style="display: grid; grid-template-columns: 1fr; gap: 32px;">
+        <!-- Blast WA Card -->
+        <div style="background: linear-gradient(to right, #4f46e5, #4338ca); border-radius: 20px; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.2); overflow: hidden; color: white; display: flex; align-items: center; justify-content: space-between; padding: 32px; position: relative;">
+            <div style="position: relative; z-index: 2;">
+                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;">📢 Blast Tagihan WA</h3>
+                <p style="opacity: 0.9; margin-bottom: 24px; max-width: 500px;">Kirim notifikasi tagihan otomatis ke seluruh wali santri yang memiliki tunggakan. Sistem akan mengirim pesan satu per satu dengan jeda aman (Anti-Banned).</p>
+                <button onclick="startBillingProcess()" type="button" style="background: white; color: #4338ca; padding: 12px 24px; border-radius: 12px; font-weight: 700; border: none; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                    <i data-feather="send" style="width: 18px; height: 18px;"></i>
+                    Mulai Proses Penagihan
+                </button>
+            </div>
+            <div style="position: absolute; right: -20px; top: -20px; opacity: 0.1;">
+                <i data-feather="message-circle" style="width: 250px; height: 250px;"></i>
+            </div>
+        </div>
         <div style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden;">
             <div style="padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background: linear-gradient(to right, #f8fafc, white); display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -345,6 +359,36 @@
             @endif
         </div>
     </div>
+    <!-- Billing Progress Modal -->
+    <div id="billing-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 32px; border-radius: 20px; width: 500px; max-width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 64px; height: 64px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i data-feather="loader" id="billing-spinner" class="spin-icon" style="width: 32px; height: 32px; color: #4f46e5;"></i>
+                    <i data-feather="check-circle" id="billing-success-icon" style="width: 32px; height: 32px; color: #10b981; display: none;"></i>
+                </div>
+                <h3 id="billing-status-title" style="font-size: 1.25rem; font-weight: 800; color: #1e2937; margin-bottom: 8px;">Menyiapkan Data...</h3>
+                <p id="billing-status-desc" style="color: #64748b;">Mohon tunggu, sedang mengambil daftar tunggakan.</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="background: #f1f5f9; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 24px;">
+                <div id="billing-progress" style="background: #4f46e5; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+
+            <!-- Log Area -->
+            <div id="billing-log" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; height: 150px; overflow-y: auto; padding: 12px; font-size: 0.85rem; color: #475569; margin-bottom: 24px; font-family: monospace;">
+                <!-- Logs here -->
+            </div>
+
+            <button onclick="closeBillingModal()" id="btn-close-billing" style="display: none; width: 100%; background: #4f46e5; color: white; padding: 12px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer;">Selesai & Tutup</button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spin-icon { animation: spin 1s linear infinite; }
+    </style>
 @endsection
 
 @push('scripts')
@@ -447,6 +491,125 @@ function toggleEdit(id) {
     
     // Re-render feather icons
     feather.replace();
+}
+
+// Billing Blast Logic
+let billingTargets = [];
+let billingIndex = 0;
+let stopBilling = false;
+
+function startBillingProcess() {
+    Swal.fire({
+        title: 'Mulai Penagihan Massal?',
+        text: "Sistem akan mencari santri yang menunggak dan mengirim pesan WA satu per satu.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4f46e5',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Mulai!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetchTargets();
+        }
+    });
+}
+
+function fetchTargets() {
+    // Show Modal
+    document.getElementById('billing-modal').style.display = 'flex';
+    document.getElementById('billing-log').innerHTML = '';
+    document.getElementById('billing-progress').style.width = '0%';
+    
+    logBilling('Mengambil data tunggakan...');
+
+    fetch("{{ route('bendahara.billing.targets') }}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.count === 0) {
+                logBilling('❌ Tidak ada tunggakan ditemukan.');
+                document.getElementById('billing-status-title').innerText = 'Selesai';
+                document.getElementById('billing-status-desc').innerText = 'Tidak ada santri yang perlu ditagih.';
+                document.getElementById('btn-close-billing').style.display = 'block';
+                return;
+            }
+
+            billingTargets = data.targets;
+            billingIndex = 0;
+            stopBilling = false;
+            
+            logBilling(`✅ Ditemukan ${data.count} santri dengan tunggakan.`);
+            processNextBilling();
+        })
+        .catch(error => {
+            logBilling('❌ Error fetching data: ' + error);
+        });
+}
+
+function processNextBilling() {
+    if (stopBilling || billingIndex >= billingTargets.length) {
+        finishBilling();
+        return;
+    }
+
+    const target = billingTargets[billingIndex];
+    const progress = Math.round(((billingIndex + 1) / billingTargets.length) * 100);
+    
+    document.getElementById('billing-progress').style.width = `${progress}%`;
+    document.getElementById('billing-status-title').innerText = `Mengirim ${billingIndex + 1} dari ${billingTargets.length}`;
+    document.getElementById('billing-status-desc').innerText = `Mengirim ke: ${target.nama}`;
+
+    // Send Request
+    fetch("{{ route('bendahara.billing.send') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(target)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            logBilling(`✅ [${billingIndex+1}/${billingTargets.length}] Terkirim: ${target.nama}`);
+        } else {
+            logBilling(`❌ [${billingIndex+1}/${billingTargets.length}] Gagal: ${target.nama}`);
+        }
+    })
+    .catch(error => {
+        logBilling(`❌ [${billingIndex+1}/${billingTargets.length}] Error: ${target.nama}`);
+    })
+    .finally(() => {
+        billingIndex++;
+        // Random Delay 3 - 8 seconds
+        const delay = Math.floor(Math.random() * (8000 - 3000 + 1) + 3000);
+        logBilling(`⏳ Jeda ${delay/1000} detik...`);
+        
+        setTimeout(processNextBilling, delay);
+    });
+}
+
+function finishBilling() {
+    document.getElementById('billing-status-title').innerText = 'Selesai!';
+    document.getElementById('billing-status-desc').innerText = 'Proses penagihan telah selesai.';
+    document.getElementById('billing-spinner').style.display = 'none';
+    document.getElementById('billing-success-icon').style.display = 'block';
+    document.getElementById('btn-close-billing').style.display = 'block';
+    logBilling('🏁 Proses selesai.');
+}
+
+function logBilling(msg) {
+    const logDiv = document.getElementById('billing-log');
+    const div = document.createElement('div');
+    div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    div.style.marginBottom = '4px';
+    logDiv.appendChild(div);
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function closeBillingModal() {
+    document.getElementById('billing-modal').style.display = 'none';
+    window.location.reload(); // Reload to refresh page
 }
 </script>
 @endpush

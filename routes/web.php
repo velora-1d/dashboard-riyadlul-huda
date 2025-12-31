@@ -175,6 +175,10 @@ Route::prefix('bendahara')->middleware(['auth', 'role:bendahara'])->group(functi
     Route::get('/laporan/export-kas', [App\Http\Controllers\BendaharaController::class, 'exportLaporanKas'])->name('bendahara.laporan.export-kas');
     Route::get('/laporan/export-gaji', [App\Http\Controllers\BendaharaController::class, 'exportLaporanGaji'])->name('bendahara.laporan.export-gaji');
     Route::get('/laporan/export-keuangan-lengkap', [App\Http\Controllers\BendaharaController::class, 'exportLaporanKeuanganLengkap'])->name('bendahara.laporan.export-keuangan-lengkap');
+    
+    // Billing Blast (WA Tagihan Massal)
+    Route::get('/billing/targets', [App\Http\Controllers\BillingController::class, 'getTargets'])->name('bendahara.billing.targets');
+    Route::post('/billing/send', [App\Http\Controllers\BillingController::class, 'sendSingleReminder'])->name('bendahara.billing.send');
 });
 
 /*
