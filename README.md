@@ -143,12 +143,12 @@ php artisan serve
 
 ## Akun Default
 
-| Role       | Email                       | Password |
-| ---------- | --------------------------- | -------- |
-| Admin      | admin@riyadlulhuda.com      | password |
-| Pendidikan | pendidikan@riyadlulhuda.com | password |
-| Sekretaris | sekretaris@riyadlulhuda.com | password |
-| Bendahara  | bendahara@riyadlulhuda.com  | password |
+| Role       | Email                    | Password     |
+| ---------- | ------------------------ | ------------ |
+| Admin      | a\*\*\*@riyadlulhuda.com | **\*\*\*\*** |
+| Pendidikan | p\*\*\*@riyadlulhuda.com | **\*\*\*\*** |
+| Sekretaris | s\*\*\*@riyadlulhuda.com | **\*\*\*\*** |
+| Bendahara  | b\*\*\*@riyadlulhuda.com | **\*\*\*\*** |
 
 ---
 
