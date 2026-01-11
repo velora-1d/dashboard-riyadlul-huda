@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Santrix Dashboard",
+  "productName": "Management Riyadlul Huda",
   "version": "0.1.0",
-  "identifier": "com.santrix.dashboard",
+  "identifier": "com.riyadlulhuda.dashboard",
   "build": {
     "frontendDist": "../src"
   },

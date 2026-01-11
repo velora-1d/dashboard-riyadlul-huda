@@ -17,7 +17,7 @@ pub fn run() {
                 "main",
                 tauri::WebviewUrl::External("https://dashboard.riyadlulhuda.my.id".parse().unwrap()),
             )
-            .title("Santrix Dashboard")
+            .title("Management Riyadlul Huda")
             .inner_size(1280.0, 800.0)
             .initialization_script(r#"
                 // Force all target="_blank" to open in the same window so we can catch them in Rust
