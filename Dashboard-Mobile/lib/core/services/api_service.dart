@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 
 class ApiService {
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: 'https://dashboard.riyadlulhuda.my.id/api/',
@@ -13,6 +16,8 @@ class ApiService {
     ),
   );
 
+  ApiService._internal();
+
   Dio get client => _dio;
 
   void setToken(String token) {
@@ -21,5 +26,14 @@ class ApiService {
 
   void clearToken() {
     _dio.options.headers.remove('Authorization');
+  }
+
+  Future<Response> get(String path,
+      {Map<String, dynamic>? queryParameters}) async {
+    return await _dio.get(path, queryParameters: queryParameters);
+  }
+
+  Future<Response> post(String path, {dynamic data}) async {
+    return await _dio.post(path, data: data);
   }
 }

@@ -2,19 +2,31 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart'; // For kReleaseMode
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/api_service.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/dashboard/screens/dashboard_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+
+  if (token != null) {
+    ApiService().setToken(token);
+  }
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode, // Enable in debug mode
-      builder: (context) => const RiyadlulHudaApp(),
+      builder: (context) => RiyadlulHudaApp(isLoggedIn: token != null),
     ),
   );
 }
 
 class RiyadlulHudaApp extends StatelessWidget {
-  const RiyadlulHudaApp({super.key});
+  final bool isLoggedIn;
+  const RiyadlulHudaApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +56,7 @@ class RiyadlulHudaApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginScreen(),
+      home: isLoggedIn ? const DashboardScreen() : const LoginScreen(),
     );
   }
 }
