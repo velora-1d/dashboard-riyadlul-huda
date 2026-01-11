@@ -18,6 +18,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   List<dynamic> _withdrawals = [];
   bool _isLoading = false;
   int? _selectedBankAccountId;
+  double _saldoGateway = 0;
 
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'id_ID',
@@ -40,6 +41,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       setState(() {
         _bankAccounts = accountsRes.data['data'] ?? [];
         _withdrawals = withdrawalsRes.data['data'] ?? [];
+        _saldoGateway = double.tryParse(
+                withdrawalsRes.data['saldo_payment_gateway'].toString()) ??
+            0;
         _isLoading = false;
       });
     } catch (e) {
@@ -103,6 +107,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildBalanceCard(),
+                    const SizedBox(height: 24),
                     _buildRequestForm(),
                     const SizedBox(height: 24),
                     Text(
@@ -363,6 +369,69 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0288D1), Color(0xFF29B6F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0288D1).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.account_balance_wallet,
+                color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'SALDO PAYMENT GATEWAY',
+            style: GoogleFonts.outfit(
+              color: Colors.white.withOpacity(0.8),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _currencyFormat.format(_saldoGateway),
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Siap untuk ditarik',
+            style: GoogleFonts.outfit(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

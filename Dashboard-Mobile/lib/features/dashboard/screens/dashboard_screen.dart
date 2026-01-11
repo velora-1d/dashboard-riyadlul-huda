@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../bendahara/screens/cek_tunggakan_screen.dart';
 import '../../bendahara/screens/financial_list_screen.dart';
-import '../../bendahara/screens/data_pegawai_screen.dart';
-import '../../bendahara/screens/gaji_pegawai_screen.dart';
+import '../../bendahara/screens/gaji_history_screen.dart';
+import '../../bendahara/screens/pegawai_list_screen.dart';
+
 import '../../sekretaris/screens/data_santri_screen.dart';
 import '../../sekretaris/screens/perizinan_screen.dart';
 import 'notification_screen.dart';
 import '../../sekretaris/screens/kartu_digital_grid_screen.dart';
 import '../../sekretaris/screens/report_screen.dart';
-import '../../pendidikan/screens/e_rapor_screen.dart';
-import '../../pendidikan/screens/ijazah_digital_screen.dart';
-import '../../pendidikan/screens/kalender_akademik_screen.dart';
+import '../../pendidikan/screens/erapor_screen.dart';
+import '../../pendidikan/screens/ijazah_screen.dart';
+import '../../pendidikan/screens/kalender_screen.dart';
+import '../../bendahara/screens/laporan_keuangan_screen.dart';
 import '../../../core/services/api_service.dart';
 import '../../bendahara/screens/syahriah_payment_screen.dart';
 import '../../bendahara/screens/savings_screen.dart';
 import '../../bendahara/screens/withdrawal_screen.dart';
 import '../../admin/screens/withdrawal_tracking_screen.dart';
-import 'placeholder_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String? role;
+  const DashboardScreen({super.key, this.role});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -37,6 +40,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.role != null) {
+      _userRole = widget.role!;
+    }
     _loadUserInfo();
     _fetchKpi();
   }
@@ -44,7 +50,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userRole = prefs.getString('user_role') ?? 'Staff';
+      // Prioritize saved role if widget.role is null, or just refresh logic
+      if (widget.role == null) {
+        _userRole = prefs.getString('user_role') ?? 'Staff';
+      }
       _userName = prefs.getString('user_name') ?? 'User';
     });
   }
@@ -71,8 +80,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } catch (e) {
-        debugPrint('Error fetching KPI: $e');
-        setState(() => _isLoadingKpi = false);
+        if (e is DioException && e.response?.statusCode == 401) {
+          // Token expired, logout
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          await ApiService().clearToken();
+
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          debugPrint('Error fetching KPI: $e');
+          setState(() => _isLoadingKpi = false);
+        }
       }
     }
   }
@@ -199,106 +223,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
   }
 
-  void _navigateToMenu(String label) {
+  Future<void> _navigateToMenu(String label) async {
+    Widget? screen;
     if (label == 'Data Santri') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const DataSantriScreen()),
-      );
+      screen = const DataSantriScreen();
     } else if (label == 'Kartu Digital') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const KartuDigitalGridScreen()),
-      );
+      screen = const KartuDigitalGridScreen();
     } else if (label == 'Perizinan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const PerizinanScreen()),
-      );
+      screen = const PerizinanScreen();
     } else if (label == 'Laporan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ReportScreen()),
-      );
+      screen = const ReportScreen();
     } else if (label == 'Input Syahriah') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SyahriahPaymentScreen()),
-      );
+      screen = const SyahriahPaymentScreen();
     } else if (label == 'Cek Tunggakan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const CekTunggakanScreen()),
-      );
+      screen = const CekTunggakanScreen();
     } else if (label == 'Pemasukan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const FinancialListScreen(type: 'pemasukan'),
-        ),
-      );
+      screen = const FinancialListScreen(type: 'pemasukan');
     } else if (label == 'Pengeluaran') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const FinancialListScreen(type: 'pengeluaran'),
-        ),
-      );
+      screen = const FinancialListScreen(type: 'pengeluaran');
     } else if (label == 'Lap. Keuangan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                const PlaceholderScreen(title: 'Laporan Keuangan')),
-      );
+      screen = const LaporanKeuanganScreen();
     } else if (label == 'Tabungan') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SavingsScreen()),
-      );
+      screen = const SavingsScreen();
     } else if (label == 'Data Pegawai') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const DataPegawaiScreen()),
-      );
+      screen = const PegawaiListScreen();
     } else if (label == 'Gaji Pegawai') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const GajiPegawaiScreen()),
-      );
+      screen = const GajiHistoryScreen();
     } else if (label == 'E-Rapor') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ERaporScreen()),
-      );
+      screen = const EraporScreen();
     } else if (label == 'Ijazah Digital') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const IjazahDigitalScreen()),
-      );
+      screen = const IjazahScreen();
     } else if (label == 'Kalender Akademik') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const KalenderAkademikScreen()),
-      );
+      screen = const KalenderScreen();
     } else if (label == 'Billing Blast') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                const PlaceholderScreen(title: 'Billing Blast')),
-      );
+      screen = const CekTunggakanScreen();
     } else if (label == 'Penarikan Dana') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const WithdrawalScreen()),
-      );
+      screen = const WithdrawalScreen();
     } else if (label == 'Tracking Pencairan') {
-      Navigator.push(
+      screen = const WithdrawalTrackingScreen();
+    }
+
+    if (screen != null) {
+      // WAIT for the screen to pop (user comes back), then REFRESH DATA
+      await Navigator.push(
         context,
-        MaterialPageRoute(
-            builder: (context) => const WithdrawalTrackingScreen()),
+        MaterialPageRoute(builder: (context) => screen!),
       );
+      _fetchKpi(); // Auto-refresh logic
     }
   }
 
@@ -324,112 +295,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       drawer: _buildDrawer(context),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      body: RefreshIndicator(
+        onRefresh: _fetchKpi,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Selamat Datang,',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _userName.isEmpty ? 'Memuat...' : _userName,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _userRole.toUpperCase(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selamat Datang,',
                       style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        color: Colors.white70,
+                        fontSize: 14,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      _userName.isEmpty ? 'Memuat...' : _userName,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _userRole.toUpperCase(),
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            if (_userRole.toLowerCase() == 'sekretaris' ||
-                _userRole.toLowerCase() == 'admin' ||
-                _userRole.toLowerCase() == 'super_admin' ||
-                _userRole.toLowerCase() == 'bendahara') ...[
-              _buildKpiHeader(),
-              const SizedBox(height: 16),
-              _buildKpiGrid(),
               const SizedBox(height: 24),
-            ],
 
-            // Menu Grid
-            Text(
-              'Menu Utama',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1F2937),
+              if (_userRole.toLowerCase() == 'sekretaris' ||
+                  _userRole.toLowerCase() == 'admin' ||
+                  _userRole.toLowerCase() == 'super_admin' ||
+                  _userRole.toLowerCase() == 'bendahara') ...[
+                _buildKpiHeader(),
+                const SizedBox(height: 16),
+                _buildKpiGrid(),
+                const SizedBox(height: 24),
+              ],
+
+              // Menu Grid
+              Text(
+                'Menu Utama',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1F2937),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                mainAxisExtent: 110,
+              const SizedBox(height: 16),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  mainAxisExtent: 110,
+                ),
+                itemCount: menuItems.length,
+                itemBuilder: (context, index) {
+                  final item = menuItems[index];
+                  return _buildMenuCard(
+                    icon: item['icon'] as IconData,
+                    label: item['label'] as String,
+                    color: item['color'] as Color,
+                    onTap: () => _navigateToMenu(item['label'] as String),
+                  );
+                },
               ),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                return _buildMenuCard(
-                  icon: item['icon'] as IconData,
-                  label: item['label'] as String,
-                  color: item['color'] as Color,
-                  onTap: () => _navigateToMenu(item['label'] as String),
-                );
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -515,6 +490,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Colors.orange, Icons.school),
         _buildKpiCard('Asrama', _kpiData['total_asrama']?.toString() ?? '0',
             Colors.teal, Icons.apartment),
+        _buildKpiCard('Kamar', _kpiData['total_kamar']?.toString() ?? '0',
+            Colors.brown, Icons.meeting_room_outlined),
       ],
     );
   }
@@ -629,7 +606,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-              ApiService().clearToken();
+              await ApiService().clearToken();
 
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(

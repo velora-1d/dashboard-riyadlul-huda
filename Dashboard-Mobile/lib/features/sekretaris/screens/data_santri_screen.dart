@@ -7,7 +7,8 @@ import 'add_perizinan_screen.dart';
 import 'add_edit_santri_screen.dart';
 
 class DataSantriScreen extends StatefulWidget {
-  const DataSantriScreen({super.key});
+  final bool isSelectionMode;
+  const DataSantriScreen({super.key, this.isSelectionMode = false});
 
   @override
   State<DataSantriScreen> createState() => _DataSantriScreenState();
@@ -249,105 +250,122 @@ class _DataSantriScreenState extends State<DataSantriScreen> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            contentPadding: const EdgeInsets.all(12),
-            leading: CircleAvatar(
-              backgroundColor: const Color(0xFF1B5E20).withOpacity(0.1),
-              child: Text(
-                santri.nama[0].toUpperCase(),
-                style: GoogleFonts.outfit(
-                    color: const Color(0xFF1B5E20),
-                    fontWeight: FontWeight.bold),
+      child: InkWell(
+        onTap: widget.isSelectionMode
+            ? () => Navigator.pop(context, santri)
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.all(12),
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFF1B5E20).withOpacity(0.1),
+                child: Text(
+                  santri.nama[0].toUpperCase(),
+                  style: GoogleFonts.outfit(
+                      color: const Color(0xFF1B5E20),
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      santri.nama,
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  if (!widget.isSelectionMode) ...[
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined,
+                          size: 20, color: Colors.blue),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  AddEditSantriScreen(santri: santri)),
+                        );
+                        if (result == true) _fetchSantri();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.person_off_outlined,
+                          size: 20, color: Colors.red),
+                      onPressed: () => _deactivateSantri(santri.id),
+                    ),
+                  ],
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text('NIS: ${santri.nis}',
+                      style: GoogleFonts.outfit(fontSize: 12)),
+                  Text('Kelas: ${santri.kelas} • Kamar: ${santri.kamar}',
+                      style: GoogleFonts.outfit(fontSize: 12)),
+                  if (santri.virtualAccountNumber != null &&
+                      santri.virtualAccountNumber!.isNotEmpty)
+                    Text('VA BSI: ${santri.virtualAccountNumber}',
+                        style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: const Color(0xFF1B5E20),
+                            fontWeight: FontWeight.bold)),
+                ],
               ),
             ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    santri.nama,
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined,
-                      size: 20, color: Colors.blue),
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              AddEditSantriScreen(santri: santri)),
-                    );
-                    if (result == true) _fetchSantri();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.person_off_outlined,
-                      size: 20, color: Colors.red),
-                  onPressed: () => _deactivateSantri(santri.id),
-                ),
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text('NIS: ${santri.nis}',
-                    style: GoogleFonts.outfit(fontSize: 12)),
-                Text('Kelas: ${santri.kelas} • Kamar: ${santri.kamar}',
-                    style: GoogleFonts.outfit(fontSize: 12)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DigitalIdCardScreen(santri: santri),
+            if (!widget.isSelectionMode)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DigitalIdCardScreen(santri: santri),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.qr_code_2, size: 18),
+                      label: Text('Kartu ID',
+                          style: GoogleFonts.outfit(fontSize: 12)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AddPerizinanScreen(santri: santri),
+                          ),
+                        );
+                        if (result == true) {
+                          _fetchSantri(); // Refresh
+                        }
+                      },
+                      icon: const Icon(Icons.add_task,
+                          size: 18, color: Colors.white),
+                      label: Text('Tambah Izin',
+                          style: GoogleFonts.outfit(
+                              fontSize: 12, color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.qr_code_2, size: 18),
-                  label:
-                      Text('Kartu ID', style: GoogleFonts.outfit(fontSize: 12)),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AddPerizinanScreen(santri: santri),
-                      ),
-                    );
-                    if (result == true) {
-                      _fetchSantri(); // Refresh
-                    }
-                  },
-                  icon:
-                      const Icon(Icons.add_task, size: 18, color: Colors.white),
-                  label: Text('Tambah Izin',
-                      style: GoogleFonts.outfit(
-                          fontSize: 12, color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B5E20),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+          ],
+        ),
       ),
     );
   }

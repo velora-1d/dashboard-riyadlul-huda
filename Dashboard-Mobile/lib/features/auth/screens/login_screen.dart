@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
+import '../../../services/fcm_service.dart';
 import '../../dashboard/screens/dashboard_screen.dart'; // Will be created next
 
 class LoginScreen extends StatefulWidget {
@@ -54,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('user_name', response.data['user']['name']);
         await prefs.setString('user_role', response.data['user']['role']);
 
-        apiService.setToken(token);
+        await apiService.setToken(token);
+
+        // Sync FCM Token with Backend
+        await FcmService.syncTokenWithBackend();
 
         if (mounted) {
           debugPrint("Navigating to Dashboard...");

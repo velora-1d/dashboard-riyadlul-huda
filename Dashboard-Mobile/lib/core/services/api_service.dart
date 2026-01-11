@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -20,12 +21,26 @@ class ApiService {
 
   Dio get client => _dio;
 
-  void setToken(String token) {
+  Future<void> setToken(String token) async {
     _dio.options.headers['Authorization'] = 'Bearer $token';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
   }
 
-  void clearToken() {
+  Future<void> clearToken() async {
     _dio.options.headers.remove('Authorization');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_role'); // Clear role as well
+  }
+
+  Future<String?> loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+    return token;
   }
 
   Future<Response> get(String path,

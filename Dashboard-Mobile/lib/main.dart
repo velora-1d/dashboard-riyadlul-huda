@@ -2,31 +2,30 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart'; // For kReleaseMode
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'core/services/api_service.dart';
-import 'features/auth/screens/login_screen.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'features/auth/screens/splash_screen.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
 
-  if (token != null) {
-    ApiService().setToken(token);
+  try {
+    await Firebase.initializeApp();
+    await FcmService.initialize();
+  } catch (e) {
+    if (kDebugMode) print('Firebase initialization failed: $e');
   }
 
   runApp(
     DevicePreview(
       enabled: !kReleaseMode, // Enable in debug mode
-      builder: (context) => RiyadlulHudaApp(isLoggedIn: token != null),
+      builder: (context) => const RiyadlulHudaApp(),
     ),
   );
 }
 
 class RiyadlulHudaApp extends StatelessWidget {
-  final bool isLoggedIn;
-  const RiyadlulHudaApp({super.key, required this.isLoggedIn});
+  const RiyadlulHudaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +55,7 @@ class RiyadlulHudaApp extends StatelessWidget {
           ),
         ),
       ),
-      home: isLoggedIn ? const DashboardScreen() : const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }

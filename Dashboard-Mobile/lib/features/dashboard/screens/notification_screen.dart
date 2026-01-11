@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/models/notification_model.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
+import '../../auth/screens/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -35,11 +38,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
         });
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil notifikasi: $e')),
-        );
+        setState(() => _isLoading = false);
+        if (e is DioException && e.response?.statusCode == 401) {
+          // Token expired, logout
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          await _apiService.clearToken();
+
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal mengambil notifikasi: $e')),
+          );
+        }
       }
     }
   }

@@ -1,48 +1,78 @@
-class AcademicEvent {
+class KalenderEvent {
   final int id;
-  final String title;
-  final String description;
-  final DateTime date;
-  final String category; // e.g., 'Libur', 'Ujian', 'Kegiatan'
+  final String judul;
+  final String deskripsi;
+  final String tanggalMulai;
+  final String tanggalSelesai;
+  final String kategori;
+  final String warna;
 
-  AcademicEvent({
+  KalenderEvent({
     required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-    required this.category,
+    required this.judul,
+    required this.deskripsi,
+    required this.tanggalMulai,
+    required this.tanggalSelesai,
+    required this.kategori,
+    required this.warna,
   });
 
-  factory AcademicEvent.fromJson(Map<String, dynamic> json) {
-    return AcademicEvent(
+  factory KalenderEvent.fromJson(Map<String, dynamic> json) {
+    return KalenderEvent(
       id: json['id'],
-      title: json['judul'] ?? '',
-      description: json['deskripsi'] ?? '',
-      date: DateTime.parse(json['tanggal']),
-      category: json['kategori'] ?? 'Kegiatan',
+      judul: json['judul'],
+      deskripsi: json['deskripsi'],
+      tanggalMulai: json['tanggal_mulai'],
+      tanggalSelesai: json['tanggal_selesai'],
+      kategori: json['kategori'],
+      warna: json['warna'],
     );
   }
 }
 
-class GradeRecord {
-  final String subject;
-  final String score;
-  final String grade;
-  final String note;
+class Kelas {
+  final int id;
+  final String namaKelas;
 
-  GradeRecord({
-    required this.subject,
-    required this.score,
-    required this.grade,
-    this.note = '-',
+  Kelas({required this.id, required this.namaKelas});
+
+  factory Kelas.fromJson(Map<String, dynamic> json) {
+    return Kelas(id: json['id'], namaKelas: json['nama_kelas']);
+  }
+}
+
+class SantriSimple {
+  final int id;
+  final String namaSantri;
+  final String nis;
+
+  SantriSimple({required this.id, required this.namaSantri, required this.nis});
+
+  factory SantriSimple.fromJson(Map<String, dynamic> json) {
+    return SantriSimple(
+      id: json['id'],
+      namaSantri: json['nama_santri'],
+      nis: json['nis'],
+    );
+  }
+}
+
+class MataPelajaran {
+  final int id;
+  final String namaMapel;
+  final bool hasWeeklyExam;
+
+  MataPelajaran({
+    required this.id,
+    required this.namaMapel,
+    required this.hasWeeklyExam,
   });
 
-  factory GradeRecord.fromJson(Map<String, dynamic> json) {
-    return GradeRecord(
-      subject: json['mapel'] ?? '',
-      score: json['nilai']?.toString() ?? '0',
-      grade: json['grade'] ?? '-',
-      note: json['keterangan'] ?? '-',
+  factory MataPelajaran.fromJson(Map<String, dynamic> json) {
+    return MataPelajaran(
+      id: json['id'],
+      namaMapel: json['nama_mapel'],
+      hasWeeklyExam: json['has_weekly_exam'] == true,
     );
   }
 }

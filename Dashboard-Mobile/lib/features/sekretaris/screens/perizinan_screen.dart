@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/api_service.dart';
 import '../models/perizinan.dart';
+import 'data_santri_screen.dart';
+import 'add_perizinan_screen.dart';
 
 class PerizinanScreen extends StatefulWidget {
   const PerizinanScreen({super.key});
@@ -73,16 +75,31 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Typically adding permit requires selecting a santri first
-          // For now, let's navigate to DataSantriScreen to pick a santri
-          // Or if we want a direct shortcut, we need a picker.
-          // Let's go to DataSantriScreen with a 'selection' mode.
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('Pilih Santri dari menu Data Santri untuk buat izin')),
+        onPressed: () async {
+          // 1. Select Santri
+          final santri = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  const DataSantriScreen(isSelectionMode: true),
+            ),
           );
+
+          // 2. If Santri selected, Open Add Form
+          if (santri != null) {
+            if (!context.mounted) return;
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddPerizinanScreen(santri: santri),
+              ),
+            );
+
+            // 3. Refresh list if permission successfully added
+            if (result == true) {
+              _fetchPerizinan();
+            }
+          }
         },
         backgroundColor: const Color(0xFF1B5E20),
         child: const Icon(Icons.add, color: Colors.white),

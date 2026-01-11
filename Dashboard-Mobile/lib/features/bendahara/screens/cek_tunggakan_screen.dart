@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/api_service.dart';
 import '../models/santri_arrears.dart';
 
@@ -116,7 +118,7 @@ class _CekTunggakanScreenState extends State<CekTunggakanScreen> {
                   ),
                 ),
                 Text(
-                  'Rp ${santri.totalTunggakan.toString()}', // Simple format for now
+                  'Rp ${NumberFormat.compact(locale: 'id').format(santri.totalTunggakan)}',
                   style: GoogleFonts.outfit(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
@@ -159,6 +161,45 @@ class _CekTunggakanScreenState extends State<CekTunggakanScreen> {
                 );
               }).toList(),
             ),
+            if (santri.noHpOrtu != null && santri.noHpOrtu!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final phone =
+                        santri.noHpOrtu!.replaceAll(RegExp(r'[^0-9]'), '');
+                    final formattedPhone = phone.startsWith('0')
+                        ? '62${phone.substring(1)}'
+                        : (phone.startsWith('62') ? phone : '62$phone');
+
+                    final message =
+                        "Assalamu'alaikum Wr. Wb.\n\nYth. Wali dari Ananda *${santri.name}*\nNIS: ${santri.nis}\nKelas: ${santri.kelas}\n\nKami informasikan bahwa terdapat *tunggakan Syahriah* sebanyak ${santri.jumlahBulan} bulan.\n\n💰 *Total Tunggakan:* Rp ${NumberFormat.decimalPattern('id').format(santri.totalTunggakan)}\n\nMohon dapat melunasi melalui Bendahara PP Riyadlul Huda.\n\nJazakumullahu Khairan.\n_Bendahara PP Riyadlul Huda_";
+
+                    final url = Uri.parse(
+                        "https://wa.me/$formattedPhone?text=${Uri.encodeComponent(message)}");
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Tidak dapat membuka WhatsApp')));
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.send, size: 16),
+                  label: const Text('Kirim Tagihan WA'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ]
           ],
         ),
       ),
