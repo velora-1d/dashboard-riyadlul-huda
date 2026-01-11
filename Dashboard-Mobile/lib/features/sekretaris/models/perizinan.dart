@@ -22,12 +22,13 @@ class Perizinan {
   factory Perizinan.fromJson(Map<String, dynamic> json) {
     return Perizinan(
       id: json['id'],
-      santriId: json['santri_id'],
-      namaSantri: json['santri']['nama'] ?? 'Unknown',
-      jenis: json['jenis_perizinan'] ?? '-',
+      santriId: json['santri_id'] ?? 0,
+      namaSantri: json['nama_santri'] ?? 'Unknown',
+      jenis: json['jenis'] ?? '-',
       alasan: json['alasan'] ?? '-',
-      tglMulai: DateTime.parse(json['tanggal_mulai']),
-      tglSelesai: DateTime.parse(json['tanggal_selesai']),
+      tglMulai: DateTime.parse(json['tgl_pulang'] ?? json['tanggal_mulai']),
+      tglSelesai:
+          DateTime.parse(json['tgl_kembali'] ?? json['tanggal_selesai']),
       status: json['status'] ?? 'Pending',
     );
   }

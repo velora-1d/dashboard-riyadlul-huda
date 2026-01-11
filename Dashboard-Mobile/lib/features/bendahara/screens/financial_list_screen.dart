@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../core/services/api_service.dart';
 import '../models/financial_models.dart';
 
+import 'add_financial_entry_screen.dart';
+
 class FinancialListScreen extends StatefulWidget {
   final String type; // 'pemasukan' or 'pengeluaran'
   const FinancialListScreen({super.key, required this.type});
@@ -16,6 +18,7 @@ class _FinancialListScreenState extends State<FinancialListScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
   List<FinancialRecord> _records = [];
+  String _selectedCategory = 'Semua';
   final _currencyFormat =
       NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
 
@@ -28,10 +31,10 @@ class _FinancialListScreenState extends State<FinancialListScreen> {
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
-      final endpoint = widget.type == 'pemasukan'
-          ? 'bendahara/pemasukan'
-          : 'bendahara/pengeluaran';
-      final response = await _apiService.get(endpoint);
+      final response = await _apiService.get('bendahara/kas', queryParameters: {
+        'type': widget.type,
+        if (_selectedCategory != 'Semua') 'kategori': _selectedCategory,
+      });
       if (response.data['status'] == 'success') {
         final List data = response.data['data'];
         setState(() {
@@ -57,38 +60,84 @@ class _FinancialListScreenState extends State<FinancialListScreen> {
             Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add behavior
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddFinancialEntryScreen(type: widget.type),
+            ),
+          );
+          if (result == true) {
+            _fetchRecords();
+          }
         },
         backgroundColor: primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _fetchRecords,
-              child: _records.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long_outlined,
-                              size: 80, color: Colors.grey.shade300),
-                          const SizedBox(height: 16),
-                          Text('Belum ada data $title',
-                              style: GoogleFonts.outfit(color: Colors.grey)),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _records.length,
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        final record = _records[index];
-                        return _buildRecordCard(record, primaryColor);
-                      },
-                    ),
+      body: Column(
+        children: [
+          _buildCategoryFilters(primaryColor),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _fetchRecords,
+                    child: _records.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.receipt_long_outlined,
+                                    size: 80, color: Colors.grey.shade300),
+                                const SizedBox(height: 16),
+                                Text('Belum ada data $title',
+                                    style:
+                                        GoogleFonts.outfit(color: Colors.grey)),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _records.length,
+                            padding: const EdgeInsets.all(16),
+                            itemBuilder: (context, index) {
+                              final record = _records[index];
+                              return _buildRecordCard(record, primaryColor);
+                            },
+                          ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilters(Color color) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: ['Semua', 'Umum', 'Sembako', 'Listrik', 'Donasi'].map((cat) {
+          final isSelected = _selectedCategory == cat;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(cat),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() => _selectedCategory = cat);
+                  _fetchRecords();
+                }
+              },
+              selectedColor: color.withOpacity(0.2),
+              labelStyle: GoogleFonts.outfit(
+                color: isSelected ? color : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
+          );
+        }).toList(),
+      ),
     );
   }
 

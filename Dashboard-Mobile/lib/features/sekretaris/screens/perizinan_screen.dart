@@ -15,6 +15,7 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
   final ApiService _apiService = ApiService();
   List<Perizinan> _perizinanList = [];
   bool _isLoading = true;
+  String _selectedStatus = 'Semua';
 
   @override
   void initState() {
@@ -25,7 +26,10 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
   Future<void> _fetchPerizinan() async {
     setState(() => _isLoading = true);
     try {
-      final response = await _apiService.get('sekretaris/perizinan');
+      final response =
+          await _apiService.get('sekretaris/perizinan', queryParameters: {
+        if (_selectedStatus != 'Semua') 'status': _selectedStatus.toLowerCase(),
+      });
       if (response.data['status'] == 'success') {
         final List data = response.data['data'];
         setState(() {
@@ -46,21 +50,58 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
         title: Text('Perizinan',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _fetchPerizinan,
-              child: _perizinanList.isEmpty
-                  ? const Center(child: Text('Tidak ada data perizinan'))
-                  : ListView.builder(
-                      itemCount: _perizinanList.length,
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        final izin = _perizinanList[index];
-                        return _buildPerizinanCard(izin);
-                      },
-                    ),
+      body: Column(
+        children: [
+          _buildFilterChips(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _fetchPerizinan,
+                    child: _perizinanList.isEmpty
+                        ? const Center(child: Text('Tidak ada data perizinan'))
+                        : ListView.builder(
+                            itemCount: _perizinanList.length,
+                            padding: const EdgeInsets.all(16),
+                            itemBuilder: (context, index) {
+                              final izin = _perizinanList[index];
+                              return _buildPerizinanCard(izin);
+                            },
+                          ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: ['Semua', 'Aktif', 'Kembali', 'Terlambat'].map((status) {
+          final isSelected = _selectedStatus == status;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(status),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() => _selectedStatus = status);
+                  _fetchPerizinan();
+                }
+              },
+              selectedColor: const Color(0xFF1B5E20).withOpacity(0.2),
+              labelStyle: GoogleFonts.outfit(
+                color: isSelected ? const Color(0xFF1B5E20) : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
+          );
+        }).toList(),
+      ),
     );
   }
 

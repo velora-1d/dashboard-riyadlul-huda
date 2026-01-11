@@ -8,11 +8,15 @@ import '../../bendahara/screens/data_pegawai_screen.dart';
 import '../../bendahara/screens/gaji_pegawai_screen.dart';
 import '../../sekretaris/screens/data_santri_screen.dart';
 import '../../sekretaris/screens/perizinan_screen.dart';
+import 'notification_screen.dart';
+import '../../sekretaris/screens/kartu_digital_grid_screen.dart';
+import '../../sekretaris/screens/report_screen.dart';
 import '../../pendidikan/screens/e_rapor_screen.dart';
 import '../../pendidikan/screens/ijazah_digital_screen.dart';
 import '../../pendidikan/screens/kalender_akademik_screen.dart';
 import '../../../core/services/api_service.dart';
 import '../../bendahara/screens/syahriah_payment_screen.dart';
+import '../../bendahara/screens/savings_screen.dart';
 import 'placeholder_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -148,9 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (label == 'Kartu Digital') {
       Navigator.push(
         context,
-        MaterialPageRoute(
-            builder: (context) =>
-                const PlaceholderScreen(title: 'Kartu Digital')),
+        MaterialPageRoute(builder: (context) => const KartuDigitalGridScreen()),
       );
     } else if (label == 'Perizinan') {
       Navigator.push(
@@ -160,8 +162,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (label == 'Laporan') {
       Navigator.push(
         context,
-        MaterialPageRoute(
-            builder: (context) => const PlaceholderScreen(title: 'Laporan')),
+        MaterialPageRoute(builder: (context) => const ReportScreen()),
       );
     } else if (label == 'Input Syahriah') {
       Navigator.push(
@@ -197,8 +198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (label == 'Tabungan') {
       Navigator.push(
         context,
-        MaterialPageRoute(
-            builder: (context) => const PlaceholderScreen(title: 'Tabungan')),
+        MaterialPageRoute(builder: (context) => const SavingsScreen()),
       );
     } else if (label == 'Data Pegawai') {
       Navigator.push(
@@ -239,7 +239,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const NotificationScreen()),
+              );
+            },
           ),
         ],
       ),
