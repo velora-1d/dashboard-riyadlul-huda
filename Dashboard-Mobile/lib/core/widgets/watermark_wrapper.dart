@@ -24,16 +24,21 @@ class WatermarkWrapper extends StatelessWidget {
                     Text(
                       'Management Riyadlul Huda',
                       style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black.withOpacity(0.5),
+                        letterSpacing: 1.2,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      'Created by Mahin Utsman Nawawi',
-                      style: GoogleFonts.outfit(
+                      'Dibuat Oleh : Mahin Utsman Nawawi, S.H',
+                      style: GoogleFonts.caveat(
+                        // Using a handwritten style or similar if available, or just italic outfit
                         fontSize: 10,
-                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black.withOpacity(0.4),
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ],
