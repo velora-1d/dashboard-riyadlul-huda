@@ -247,31 +247,61 @@ class _KalenderScreenState extends State<KalenderScreen> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Batal')),
             ElevatedButton(
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                try {
-                  final data = {
-                    'judul': titleController.text,
-                    'deskripsi': descController.text,
-                    'tanggal_mulai': DateFormat('yyyy-MM-dd').format(startDate),
-                    'tanggal_selesai': DateFormat('yyyy-MM-dd').format(endDate),
-                    'warna': selectedColor,
-                    'kategori': selectedCategory,
-                  };
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      setState(() => _isLoading = true);
+                      final navigator = Navigator.of(context);
+                      final scaffold = ScaffoldMessenger.of(context);
 
-                  if (event == null) {
-                    await _apiService.post('pendidikan/kalender', data: data);
-                  } else {
-                    await _apiService.put('pendidikan/kalender/${event.id}',
-                        data: data);
-                  }
-                  _fetchEvents();
-                  navigator.pop();
-                } catch (e) {
-                  debugPrint('Error saving event: $e');
-                }
-              },
-              child: const Text('Simpan'),
+                      try {
+                        if (titleController.text.isEmpty) {
+                          throw Exception('Judul agenda tidak boleh kosong');
+                        }
+
+                        final data = {
+                          'judul': titleController.text,
+                          'deskripsi': descController.text,
+                          'tanggal_mulai':
+                              DateFormat('yyyy-MM-dd').format(startDate),
+                          'tanggal_selesai':
+                              DateFormat('yyyy-MM-dd').format(endDate),
+                          'warna': selectedColor,
+                          'kategori': selectedCategory,
+                        };
+
+                        if (event == null) {
+                          await _apiService.post('pendidikan/kalender',
+                              data: data);
+                        } else {
+                          await _apiService.put(
+                              'pendidikan/kalender/${event.id}',
+                              data: data);
+                        }
+
+                        _fetchEvents();
+                        navigator.pop();
+                        scaffold.showSnackBar(
+                          const SnackBar(
+                              content: Text('Agenda berhasil disimpan')),
+                        );
+                      } catch (e) {
+                        setState(() => _isLoading = false);
+                        String message = 'Gagal menyimpan agenda';
+                        if (e.toString().contains('Judul')) {
+                          message = e.toString().replaceAll('Exception: ', '');
+                        }
+                        scaffold.showSnackBar(
+                          SnackBar(content: Text(message)),
+                        );
+                      }
+                    },
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Simpan'),
             ),
           ],
         ),
