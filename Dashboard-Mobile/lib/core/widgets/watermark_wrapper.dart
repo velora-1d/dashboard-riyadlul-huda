@@ -14,35 +14,34 @@ class WatermarkWrapper extends StatelessWidget {
           bottom: 20,
           left: 0,
           right: 0,
-          child: IgnorePointer(
-            child: Center(
-              child: Opacity(
-                opacity: 0.15,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Management Riyadlul Huda',
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black.withOpacity(0.5),
-                        letterSpacing: 1.2,
-                      ),
+          child: Center(
+            child: Opacity(
+              opacity: 0.8, // Adjusted for black text to be clearly visible
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Management Riyadlul Huda',
+                    style: GoogleFonts.tinos(
+                      // Serif font similar to Times New Roman
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      letterSpacing: 1.2,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Dibuat Oleh : Mahin Utsman Nawawi, S.H',
-                      style: GoogleFonts.caveat(
-                        // Using a handwritten style or similar if available, or just italic outfit
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black.withOpacity(0.4),
-                        fontStyle: FontStyle.italic,
-                      ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Dibuat Oleh : Mahin Utsman Nawawi, S.H',
+                    style: GoogleFonts.tinos(
+                      // Serif font similar to Times New Roman
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontStyle: FontStyle.italic,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
