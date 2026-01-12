@@ -19,13 +19,14 @@ class KalenderEvent {
 
   factory KalenderEvent.fromJson(Map<String, dynamic> json) {
     return KalenderEvent(
-      id: json['id'],
-      judul: json['judul'],
-      deskripsi: json['deskripsi'],
-      tanggalMulai: json['tanggal_mulai'],
-      tanggalSelesai: json['tanggal_selesai'],
-      kategori: json['kategori'],
-      warna: json['warna'],
+      id: json['id'] ?? 0,
+      judul: json['judul'] ?? 'Tanpa Judul',
+      deskripsi: json['deskripsi'] ?? '',
+      tanggalMulai: json['tanggal_mulai'] ?? DateTime.now().toIso8601String(),
+      tanggalSelesai:
+          json['tanggal_selesai'] ?? DateTime.now().toIso8601String(),
+      kategori: json['kategori'] ?? 'Lainnya',
+      warna: json['warna'] ?? 'abu',
     );
   }
 }

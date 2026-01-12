@@ -50,59 +50,79 @@ class _KalenderScreenState extends State<KalenderScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _fetchEvents,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _events.length,
-                itemBuilder: (context, index) {
-                  final event = _events[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: ListTile(
-                      leading: Container(
-                        width: 12,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: _getColor(event.warna),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      title: Text(event.judul,
-                          style:
-                              GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              child: _events.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Icon(Icons.event_busy,
+                              size: 64, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
                           Text(
-                            '${DateFormat('dd MMM yyyy', 'id').format(DateTime.parse(event.tanggalMulai))} - ${DateFormat('dd MMM yyyy', 'id').format(DateTime.parse(event.tanggalSelesai))}',
+                            'Belum ada agenda',
                             style: GoogleFonts.outfit(
-                                fontSize: 12, color: Colors.grey[600]),
-                          ),
-                          if (event.deskripsi.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(event.deskripsi,
-                                style: GoogleFonts.outfit(fontSize: 13)),
-                          ]
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _showEventDialog(event: event),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteEvent(event.id),
+                                fontSize: 16, color: Colors.grey[500]),
                           ),
                         ],
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, top: 16, bottom: 80),
+                      itemCount: _events.length,
+                      itemBuilder: (context, index) {
+                        final event = _events[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            leading: Container(
+                              width: 12,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: _getColor(event.warna),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            title: Text(event.judul,
+                                style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.bold)),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${DateFormat('dd MMM yyyy', 'id').format(DateTime.parse(event.tanggalMulai))} - ${DateFormat('dd MMM yyyy', 'id').format(DateTime.parse(event.tanggalSelesai))}',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 12, color: Colors.grey[600]),
+                                ),
+                                if (event.deskripsi.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(event.deskripsi,
+                                      style: GoogleFonts.outfit(fontSize: 13)),
+                                ]
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.blue),
+                                  onPressed: () =>
+                                      _showEventDialog(event: event),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  onPressed: () => _deleteEvent(event.id),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showEventDialog(),
@@ -136,7 +156,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
       try {
         final response = await _apiService.delete('pendidikan/kalender/$id');
         if (response.data['status'] == 'success') {
-          _fetchEvents();
+          await _fetchEvents();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Agenda berhasil dihapus')));
@@ -279,8 +299,8 @@ class _KalenderScreenState extends State<KalenderScreen> {
                               data: data);
                         }
 
-                        _fetchEvents();
                         navigator.pop();
+                        _fetchEvents();
                         scaffold.showSnackBar(
                           const SnackBar(
                               content: Text('Agenda berhasil disimpan')),

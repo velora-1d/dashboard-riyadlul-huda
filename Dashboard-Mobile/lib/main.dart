@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'services/fcm_service.dart';
+import 'core/widgets/watermark_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,11 @@ class RiyadlulHudaApp extends StatelessWidget {
       title: 'Management Riyadlul Huda',
       debugShowCheckedModeBanner: false,
       locale: DevicePreview.locale(context), // Required for DevicePreview
-      builder: DevicePreview.appBuilder, // Required for DevicePreview
+      builder: (context, child) {
+        return WatermarkWrapper(
+          child: DevicePreview.appBuilder(context, child),
+        );
+      }, // Required for DevicePreview
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1B5E20), // Green for Riyadlul Huda

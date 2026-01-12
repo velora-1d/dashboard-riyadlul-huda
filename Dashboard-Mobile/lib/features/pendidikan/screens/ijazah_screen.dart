@@ -80,6 +80,16 @@ class _IjazahScreenState extends State<IjazahScreen> {
         final url = Uri.parse(response.data['url']);
         if (await canLaunchUrl(url)) {
           await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          try {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                      'Tidak dapat membuka link (Browser tidak ditemukan)')));
+            }
+          }
         }
       }
     } catch (e) {

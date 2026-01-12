@@ -86,6 +86,15 @@ class _ReportScreenState extends State<ReportScreen> {
                               if (await canLaunchUrl(url)) {
                                 await launchUrl(url,
                                     mode: LaunchMode.externalApplication);
+                              } else {
+                                try {
+                                  await launchUrl(url,
+                                      mode: LaunchMode.externalApplication);
+                                } catch (e) {
+                                  messenger.showSnackBar(const SnackBar(
+                                      content: Text(
+                                          'Tidak dapat membuka link (Browser tidak ditemukan)')));
+                                }
                               }
                             }
                           } catch (e) {
