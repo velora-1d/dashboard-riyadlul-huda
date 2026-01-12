@@ -350,16 +350,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       const SizedBox(height: 24),
-                      Center(
-                        child: Text(
-                          'Dibuat oleh Mahin Utsman Nawawi, S.H',
-                          style: GoogleFonts.outfit(
-                            fontSize: 11,
-                            color: Colors.grey.shade400,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
