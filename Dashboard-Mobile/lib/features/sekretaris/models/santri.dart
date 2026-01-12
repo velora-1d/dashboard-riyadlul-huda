@@ -21,6 +21,7 @@ class Santri {
   final int? kobongId;
   final int? kelasId;
   final String? gender;
+  final String? tanggalMasuk;
 
   Santri({
     required this.id,
@@ -43,32 +44,34 @@ class Santri {
     this.kobongId,
     this.kelasId,
     this.gender,
+    this.tanggalMasuk,
   });
 
   factory Santri.fromJson(Map<String, dynamic> json) {
     return Santri(
       id: json['id'],
       nama: json['nama'] ?? json['nama_santri'] ?? 'N/A',
-      nis: json['nis'] ?? '-',
+      nis: (json['nis'] ?? '-').toString(),
       kelas: json['kelas'] is Map
-          ? json['kelas']['nama_kelas']
-          : (json['kelas'] ?? '-'),
-      kamar: json['kamar'] ?? '-',
+          ? json['kelas']['nama_kelas']?.toString() ?? '-'
+          : (json['kelas']?.toString() ?? '-'),
+      kamar: json['kamar']?.toString() ?? '-',
       fotoPath: json['foto_path'] ?? '',
       status: (json['is_active'] == false) ? 'Nonaktif' : 'Aktif',
-      virtualAccountNumber: json['virtual_account_number'],
+      virtualAccountNumber: json['virtual_account_number']?.toString(),
       negara: json['negara'],
       provinsi: json['provinsi'],
       kotaKabupaten: json['kota_kabupaten'],
       kecamatan: json['kecamatan'],
       desaKampung: json['desa_kampung'],
-      rtRw: json['rt_rw'],
+      rtRw: json['rt_rw']?.toString(),
       namaOrtuWali: json['nama_ortu_wali'],
-      noHpOrtuWali: json['no_hp_ortu_wali'],
+      noHpOrtuWali: json['no_hp_ortu_wali']?.toString(),
       asramaId: json['asrama_id'],
       kobongId: json['kobong_id'],
       kelasId: json['kelas_id'],
       gender: json['gender'],
+      tanggalMasuk: json['tanggal_masuk'],
     );
   }
 
@@ -88,6 +91,7 @@ class Santri {
       'kobong_id': kobongId,
       'kelas_id': kelasId,
       'gender': gender,
+      'tanggal_masuk': tanggalMasuk,
     };
   }
 }

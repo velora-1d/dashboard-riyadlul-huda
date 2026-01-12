@@ -160,7 +160,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
     DateTime endDate =
         event != null ? DateTime.parse(event.tanggalSelesai) : DateTime.now();
     String selectedColor = event?.warna ?? 'hijau';
-    String selectedCategory = event?.kategori ?? 'akademik';
+    String selectedCategory = event?.kategori ?? 'Kegiatan';
 
     showDialog(
       context: context,
@@ -231,10 +231,11 @@ class _KalenderScreenState extends State<KalenderScreen> {
                   decoration: const InputDecoration(labelText: 'Kategori'),
                   items: const [
                     DropdownMenuItem(
-                        value: 'akademik', child: Text('Akademik')),
-                    DropdownMenuItem(value: 'libur', child: Text('Libur')),
-                    DropdownMenuItem(
-                        value: 'kegiatan', child: Text('Kegiatan')),
+                        value: 'Kegiatan', child: Text('Kegiatan (Akademik)')),
+                    DropdownMenuItem(value: 'Libur', child: Text('Libur')),
+                    DropdownMenuItem(value: 'Ujian', child: Text('Ujian')),
+                    DropdownMenuItem(value: 'Rapat', child: Text('Rapat')),
+                    DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
                   ],
                   onChanged: (v) => setState(() => selectedCategory = v!),
                 ),

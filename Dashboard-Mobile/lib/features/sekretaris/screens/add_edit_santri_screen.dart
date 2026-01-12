@@ -28,6 +28,7 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
   late TextEditingController _rtRwController;
   late TextEditingController _ortuController;
   late TextEditingController _hpOrtuController;
+  late TextEditingController _tanggalMasukController;
 
   // Dropdown values
   String? _selectedGender;
@@ -57,6 +58,9 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
     _ortuController = TextEditingController(text: widget.santri?.namaOrtuWali);
     _hpOrtuController =
         TextEditingController(text: widget.santri?.noHpOrtuWali);
+    _tanggalMasukController = TextEditingController(
+        text: widget.santri?.tanggalMasuk ??
+            DateTime.now().toString().split(' ')[0]);
 
     _selectedGender = widget.santri?.gender;
     _selectedKelasId = widget.santri?.kelasId?.toString();
@@ -119,6 +123,7 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         'kobong_id': _selectedKobongId,
         'kelas_id': _selectedKelasId,
         'gender': _selectedGender,
+        'tanggal_masuk': _tanggalMasukController.text,
       };
 
       final response = widget.santri == null
@@ -179,6 +184,7 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                         value: 'putri', child: Text('Putri')),
                   ],
                   (v) => setState(() => _selectedGender = v)),
+              _buildDatePicker('Tanggal Masuk', _tanggalMasukController),
               const SizedBox(height: 16),
               _buildSectionTitle('Alamat'),
               _buildTextField('Provinsi', _provinsiController, Icons.map),
@@ -298,6 +304,37 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         items: items,
         onChanged: onChanged,
         validator: (v) => v == null ? 'Pilih $label' : null,
+      ),
+    );
+  }
+
+  Widget _buildDatePicker(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: const Icon(Icons.calendar_today, size: 20),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        onTap: () async {
+          DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime.tryParse(controller.text) ?? DateTime.now(),
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (pickedDate != null) {
+            setState(() {
+              controller.text = pickedDate.toString().split(' ')[0];
+            });
+          }
+        },
+        validator: (v) => v!.isEmpty ? '$label tidak boleh kosong' : null,
       ),
     );
   }

@@ -10,8 +10,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await Firebase.initializeApp();
-    await FcmService.initialize();
+    if (!kIsWeb) {
+      await Firebase.initializeApp();
+      await FcmService.initialize();
+    }
   } catch (e) {
     if (kDebugMode) print('Firebase initialization failed: $e');
   }
