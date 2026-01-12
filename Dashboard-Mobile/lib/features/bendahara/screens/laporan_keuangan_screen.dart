@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/api_service.dart';
 
 class LaporanKeuanganScreen extends StatefulWidget {
@@ -178,6 +179,50 @@ class _LaporanKeuanganScreenState extends State<LaporanKeuanganScreen> {
                             _buildLegend(Colors.red, 'Pengeluaran'),
                           ],
                         ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              try {
+                                final response = await _apiService.post(
+                                    'bendahara/laporan/url',
+                                    data: {'tahun': _selectedYear});
+                                if (response.data['status'] == 'success') {
+                                  final url = Uri.parse(response.data['url']);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url,
+                                        mode: LaunchMode.externalApplication);
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                              content: Text(
+                                                  'Tidak dapat membuka link download')));
+                                    }
+                                  }
+                                }
+                              } catch (e) {
+                                debugPrint('Download error: $e');
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('Gagal mengunduh laporan')));
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.download),
+                            label: const Text('Download Laporan PDF'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        )
                       ],
                     ),
                   ),

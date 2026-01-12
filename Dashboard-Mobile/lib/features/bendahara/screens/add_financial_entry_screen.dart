@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/api_service.dart';
+import '../models/financial_models.dart';
 
 class AddFinancialEntryScreen extends StatefulWidget {
   final String type; // 'pemasukan' or 'pengeluaran'
-  const AddFinancialEntryScreen({super.key, required this.type});
+  final FinancialRecord? item; // If provided, it's Edit Mode
+
+  const AddFinancialEntryScreen({super.key, required this.type, this.item});
 
   @override
   State<AddFinancialEntryScreen> createState() =>
@@ -19,6 +22,24 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
   final _categoryController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.item != null) {
+      _amountController.text = widget.item!.amount;
+      _descController.text = widget.item!
+          .title; // title is mapped to keterangan in model often? or check model
+      // Wait, FinancialRecord usually has 'title' (keterangan) and 'category' and 'amount'.
+      // Let's double check FinancialListScreen mapping.
+      // id, keterangan, jumlah, tanggal, kategori.
+      // FinancialRecord.fromJson maps: title=keterangan.
+
+      _descController.text = widget.item!.title;
+      _categoryController.text = widget.item!.category;
+      _selectedDate = widget.item!.date;
+    }
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -37,7 +58,7 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final response = await ApiService().post('bendahara/kas', data: {
+      final data = {
         'type': widget.type,
         'jumlah': _amountController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         'keterangan': _descController.text,
@@ -45,12 +66,20 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
         'kategori': _categoryController.text.isEmpty
             ? 'Umum'
             : _categoryController.text,
-      });
+      };
+
+      final response = widget.item == null
+          ? await ApiService().post('bendahara/kas', data: data)
+          : await ApiService()
+              .put('bendahara/kas/${widget.item!.id}', data: data);
 
       if (response.data['status'] == 'success') {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Catatan berhasil disimpan')),
+            SnackBar(
+                content: Text(widget.item == null
+                    ? 'Catatan berhasil disimpan'
+                    : 'Catatan berhasil diperbarui')),
           );
           Navigator.pop(context, true);
         }
@@ -66,6 +95,49 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Catatan?'),
+        content: const Text('Data yang dihapus tidak dapat dikembalikan.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final response = await ApiService().delete(
+          'bendahara/kas/${widget.item!.id}',
+          queryParameters: {'type': widget.type});
+
+      if (response.data['status'] == 'success') {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Catatan berhasil dihapus')),
+          );
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting: $e')),
+        );
+      }
+      setState(() => _isSubmitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPemasukan = widget.type == 'pemasukan';
@@ -73,8 +145,17 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Input ${isPemasukan ? "Pemasukan" : "Pengeluaran"}',
+        title: Text(
+            widget.item == null
+                ? 'Input ${isPemasukan ? "Pemasukan" : "Pengeluaran"}'
+                : 'Edit Catatan',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        actions: [
+          if (widget.item != null)
+            IconButton(
+                onPressed: _isSubmitting ? null : _delete,
+                icon: const Icon(Icons.delete, color: Colors.red)),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -163,7 +244,10 @@ class _AddFinancialEntryScreenState extends State<AddFinancialEntryScreen> {
                   ),
                   child: _isSubmitting
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text('Simpan Catatan',
+                      : Text(
+                          widget.item == null
+                              ? 'Simpan Catatan'
+                              : 'Update Catatan',
                           style: GoogleFonts.outfit(
                               color: Colors.white,
                               fontWeight: FontWeight.bold)),

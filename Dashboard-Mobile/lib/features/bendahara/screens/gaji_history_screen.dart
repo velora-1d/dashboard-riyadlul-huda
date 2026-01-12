@@ -44,6 +44,44 @@ class _GajiHistoryScreenState extends State<GajiHistoryScreen> {
     }
   }
 
+  Future<void> _deleteGaji(int id) async {
+    final confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Data Gaji'),
+        content: const Text('Yakin ingin menghapus data gaji ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _apiService.delete('bendahara/gaji/$id');
+        _fetchGaji();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data gaji berhasil dihapus')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal menghapus data gaji')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,14 +174,46 @@ class _GajiHistoryScreenState extends State<GajiHistoryScreen> {
                               '$bulanNama ${gaji.tahun} • ${NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0).format(double.parse(gaji.nominal))}',
                               style: GoogleFonts.outfit(fontSize: 12),
                             ),
-                            trailing: Text(
-                              gaji.isDibayar ? 'Lunas' : 'Belum',
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.bold,
-                                color: gaji.isDibayar
-                                    ? Colors.green
-                                    : Colors.orange,
-                              ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  gaji.isDibayar ? 'Lunas' : 'Belum',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.bold,
+                                    color: gaji.isDibayar
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
+                                PopupMenuButton(
+                                  onSelected: (value) async {
+                                    if (value == 'edit') {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              InputGajiScreen(gaji: gaji),
+                                        ),
+                                      );
+                                      if (result == true) _fetchGaji();
+                                    } else if (value == 'delete') {
+                                      _deleteGaji(gaji.id);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text('Edit'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text('Hapus',
+                                          style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         );

@@ -149,41 +149,57 @@ class _FinancialListScreenState extends State<FinancialListScreen> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            widget.type == 'pemasukan'
-                ? Icons.trending_up
-                : Icons.trending_down,
-            color: color,
-          ),
-        ),
-        title: Text(
-          record.title,
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${record.category} • ${DateFormat('dd MMM yyyy').format(record.date)}',
-              style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
+      child: InkWell(
+        onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddFinancialEntryScreen(type: widget.type, item: record),
             ),
-          ],
-        ),
-        trailing: Text(
-          _currencyFormat.format(double.parse(record.amount)),
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            color: color,
-            fontSize: 16,
+          );
+          if (result == true) {
+            _fetchRecords();
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.type == 'pemasukan'
+                  ? Icons.trending_up
+                  : Icons.trending_down,
+              color: color,
+            ),
+          ),
+          title: Text(
+            record.title,
+            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${record.category} • ${DateFormat('dd MMM yyyy').format(record.date)}',
+                style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          trailing: Text(
+            _currencyFormat.format(double.parse(record.amount)),
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              color: color,
+              fontSize: 16,
+            ),
           ),
         ),
       ),

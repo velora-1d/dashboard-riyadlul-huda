@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/api_service.dart';
 import '../models/pendidikan_models.dart';
-import 'input_nilai_screen.dart';
 
 class EraporScreen extends StatefulWidget {
   const EraporScreen({super.key});
@@ -99,26 +98,6 @@ class _EraporScreenState extends State<EraporScreen> {
       appBar: AppBar(
         title: Text('E-Rapor Digital',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        actions: [
-          if (_selectedKelas != null)
-            TextButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InputNilaiScreen(
-                      kelas: _selectedKelas!,
-                      tahunAjaran: _tahunController.text,
-                      semester: _semester,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.edit_note, color: Colors.blue),
-              label: Text('Input Nilai',
-                  style: GoogleFonts.outfit(color: Colors.blue)),
-            ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

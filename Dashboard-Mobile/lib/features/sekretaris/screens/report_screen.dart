@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/services/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -69,8 +70,41 @@ class _ReportScreenState extends State<ReportScreen> {
                         Icons.home,
                         Colors.green),
                     const SizedBox(height: 24),
-                    Text(
-                        'Laporan mendetail bisa diunduh melalui Dashboard Web.',
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          try {
+                            final response = await _apiService.post(
+                                'sekretaris/laporan/url',
+                                data: {'type': 'semua'});
+                            if (response.data['status'] == 'success') {
+                              final url =
+                                  Uri.parse(response.data['data']['url']);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url,
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            }
+                          } catch (e) {
+                            messenger.showSnackBar(
+                                SnackBar(content: Text('Error: $e')));
+                          }
+                        },
+                        icon: const Icon(Icons.download),
+                        label: const Text('Download Laporan PDF'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[800],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Laporan akan diunduh dalam format PDF.',
                         style: GoogleFonts.outfit(
                             fontSize: 12, color: Colors.grey),
                         textAlign: TextAlign.center),

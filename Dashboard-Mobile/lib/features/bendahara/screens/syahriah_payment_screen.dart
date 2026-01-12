@@ -6,7 +6,9 @@ import '../../sekretaris/models/santri.dart';
 import '../../sekretaris/screens/data_santri_screen.dart';
 
 class SyahriahPaymentScreen extends StatefulWidget {
-  const SyahriahPaymentScreen({super.key});
+  final Map<String, dynamic>? syahriah; // If provided, edit mode
+
+  const SyahriahPaymentScreen({super.key, this.syahriah});
 
   @override
   State<SyahriahPaymentScreen> createState() => _SyahriahPaymentScreenState();
@@ -22,6 +24,7 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
   final TextEditingController _noteController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isEditMode = false;
 
   final List<String> _months = [
     'Januari',
@@ -41,9 +44,27 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.syahriah != null) {
+      _isEditMode = true;
+      _prefillData();
+    }
+  }
+
+  void _prefillData() {
+    final data = widget.syahriah!;
+    // Assuming 'santri' object is available inside data or just santri_id
+    if (data['santri'] != null) {
+      _selectedSantri = Santri.fromJson(data['santri']);
+    }
+    _selectedBulan = data['bulan'];
+    _amountController.text = data['nominal'].toString();
+    _noteController.text = data['keterangan'] ?? '';
   }
 
   Future<void> _pickSantri() async {
+    // Disable picking santri in Edit Mode if not desired, usually okay to lock it
+    if (_isEditMode) return;
+
     final result = await Navigator.push<Santri>(
       context,
       MaterialPageRoute(
@@ -69,26 +90,37 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final response = await _apiService.post('bendahara/syahriah', data: {
+      final endpoint = _isEditMode
+          ? 'bendahara/syahriah/${widget.syahriah!['id']}'
+          : 'bendahara/syahriah';
+
+      final data = {
         'santri_id': _selectedSantri!.id,
         'bulan': _selectedBulan,
         'jumlah': _amountController.text,
         'keterangan': _noteController.text,
-      });
+      };
+
+      final response = _isEditMode
+          ? await _apiService.put(endpoint, data: data)
+          : await _apiService.post(endpoint, data: data);
 
       if (response.data['status'] == 'success') {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pembayaran berhasil dicatat')),
+            SnackBar(
+                content: Text(_isEditMode
+                    ? 'Data berhasil diperbarui'
+                    : 'Pembayaran berhasil dicatat')),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Return true to refresh list
         }
       }
     } catch (e) {
       debugPrint('Error submitting payment: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal mencatat pembayaran')),
+          const SnackBar(content: Text('Gagal menyimpan data')),
         );
       }
     } finally {
@@ -100,7 +132,7 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Input Syahriah',
+        title: Text(_isEditMode ? 'Edit Syahriah' : 'Input Syahriah',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
@@ -120,6 +152,7 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
+                    color: _isEditMode ? Colors.grey[200] : Colors.white,
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -137,8 +170,9 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
                               : Colors.grey[600],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios,
-                          size: 16, color: Colors.grey),
+                      if (!_isEditMode)
+                        const Icon(Icons.arrow_forward_ios,
+                            size: 16, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -162,6 +196,7 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
                 hint: const Text('Pilih Bulan'),
+                value: _selectedBulan,
                 items: _months.map((m) {
                   return DropdownMenuItem<String>(value: m, child: Text(m));
                 }).toList(),
@@ -210,7 +245,10 @@ class _SyahriahPaymentScreenState extends State<SyahriahPaymentScreen> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text('Simpan Pembayaran',
+                      : Text(
+                          _isEditMode
+                              ? 'Perbarui Pembayaran'
+                              : 'Simpan Pembayaran',
                           style: GoogleFonts.outfit(
                               color: Colors.white,
                               fontSize: 16,

@@ -30,10 +30,12 @@ class _SplashScreenState extends State<SplashScreen> {
         try {
           final response = await ApiService().get('user');
           final role = response.data['role'];
+          final name = response.data['name'];
 
           // Save role for future reference
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('user_role', role);
+          await prefs.setString('user_name', name);
 
           if (mounted) {
             Navigator.pushReplacement(

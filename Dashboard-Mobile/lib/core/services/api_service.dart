@@ -62,7 +62,8 @@ class ApiService {
     return await _dio.put(path, data: data);
   }
 
-  Future<Response> delete(String path) async {
-    return await _dio.delete(path);
+  Future<Response> delete(String path,
+      {Map<String, dynamic>? queryParameters}) async {
+    return await _dio.delete(path, queryParameters: queryParameters);
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../bendahara/screens/cek_tunggakan_screen.dart';
@@ -18,8 +17,7 @@ import '../../pendidikan/screens/ijazah_screen.dart';
 import '../../pendidikan/screens/kalender_screen.dart';
 import '../../bendahara/screens/laporan_keuangan_screen.dart';
 import '../../../core/services/api_service.dart';
-import '../../bendahara/screens/syahriah_payment_screen.dart';
-import '../../bendahara/screens/savings_screen.dart';
+import '../../bendahara/screens/syahriah_list_screen.dart';
 import '../../bendahara/screens/withdrawal_screen.dart';
 import '../../admin/screens/withdrawal_tracking_screen.dart';
 
@@ -32,6 +30,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final ApiService _apiService = ApiService();
   String _userRole = '';
   String _userName = '';
   Map<String, dynamic> _kpiData = {};
@@ -40,201 +39,203 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.role != null) {
-      _userRole = widget.role!;
-    }
-    _loadUserInfo();
-    _fetchKpi();
+    _loadUserData();
   }
 
-  Future<void> _loadUserInfo() async {
+  Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // Prioritize saved role if widget.role is null, or just refresh logic
-      if (widget.role == null) {
-        _userRole = prefs.getString('user_role') ?? 'Staff';
-      }
-      _userName = prefs.getString('user_name') ?? 'User';
-    });
+    if (mounted) {
+      setState(() {
+        _userRole = widget.role ?? prefs.getString('user_role') ?? '';
+        _userName = prefs.getString('user_name') ?? '';
+      });
+      _fetchKpi();
+    }
   }
 
   Future<void> _fetchKpi() async {
-    final prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('user_role')?.toLowerCase();
+    if (_userRole.isEmpty) return;
 
-    if (role == 'sekretaris' ||
-        role == 'admin' ||
-        role == 'super_admin' ||
-        role == 'bendahara') {
-      setState(() => _isLoadingKpi = true);
-      try {
-        final endpoint = (role == 'bendahara')
-            ? 'bendahara/dashboard'
-            : 'sekretaris/dashboard';
+    setState(() => _isLoadingKpi = true);
 
-        final response = await ApiService().get(endpoint);
-        if (response.data['status'] == 'success') {
-          setState(() {
-            _kpiData = response.data['data'];
-            _isLoadingKpi = false;
-          });
-        }
-      } catch (e) {
-        if (e is DioException && e.response?.statusCode == 401) {
-          // Token expired, logout
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
-          await ApiService().clearToken();
-
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-          }
-        } else {
-          debugPrint('Error fetching KPI: $e');
-          setState(() => _isLoadingKpi = false);
-        }
+    try {
+      String endpoint = 'sekretaris/dashboard';
+      if (_userRole.toLowerCase() == 'bendahara') {
+        endpoint = 'bendahara/dashboard';
       }
+
+      final response = await _apiService.get(endpoint);
+      if (mounted && response.data['status'] == 'success') {
+        setState(() {
+          _kpiData = response.data['data'] ?? {};
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching KPI: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingKpi = false);
     }
   }
 
   List<Map<String, dynamic>> _getMenuItems() {
     final role = _userRole.toLowerCase();
-    debugPrint("Current User Role for Menu: $role");
-
-    final List<Map<String, dynamic>> sekretarisMenus = [
-      {
-        'icon': Icons.people_outline,
-        'label': 'Data Santri',
-        'color': Colors.blue
-      },
-      {
-        'icon': Icons.qr_code_2_outlined,
-        'label': 'Kartu Digital',
-        'color': Colors.purple
-      },
-      {
-        'icon': Icons.assignment_turned_in_outlined,
-        'label': 'Perizinan',
-        'color': Colors.orange
-      },
-      {
-        'icon': Icons.description_outlined,
-        'label': 'Laporan',
-        'color': Colors.teal
-      },
-    ];
-
-    final List<Map<String, dynamic>> bendaharaMenus = [
-      {
-        'icon': Icons.payments_outlined,
-        'label': 'Input Syahriah',
-        'color': Colors.green
-      },
-      {
-        'icon': Icons.search_off_outlined,
-        'label': 'Cek Tunggakan',
-        'color': Colors.red
-      },
-      {
-        'icon': Icons.add_chart_outlined,
-        'label': 'Pemasukan',
-        'color': Colors.blue
-      },
-      {
-        'icon': Icons.shopping_bag_outlined,
-        'label': 'Pengeluaran',
-        'color': Colors.orange
-      },
-      {
-        'icon': Icons.bar_chart_outlined,
-        'label': 'Lap. Keuangan',
-        'color': Colors.indigo
-      },
-      {
-        'icon': Icons.account_balance_wallet_outlined,
-        'label': 'Tabungan',
-        'color': Colors.teal
-      },
-      {
-        'icon': Icons.badge_outlined,
-        'label': 'Data Pegawai',
-        'color': Colors.brown
-      },
-      {
-        'icon': Icons.money_outlined,
-        'label': 'Gaji Pegawai',
-        'color': Colors.deepOrange
-      },
-      {
-        'icon': Icons.campaign_outlined,
-        'label': 'Billing Blast',
-        'color': Colors.pink
-      },
-      {
-        'icon': Icons.account_balance_wallet_outlined,
-        'label': 'Penarikan Dana',
-        'color': Colors.orange
-      },
-    ];
-
-    final List<Map<String, dynamic>> pendidikanMenus = [
-      {'icon': Icons.school_outlined, 'label': 'E-Rapor', 'color': Colors.blue},
-      {
-        'icon': Icons.verified_outlined,
-        'label': 'Ijazah Digital',
-        'color': Colors.amber
-      },
-      {
-        'icon': Icons.calendar_month_outlined,
-        'label': 'Kalender Akademik',
-        'color': Colors.red
-      },
-    ];
-
-    final List<Map<String, dynamic>> adminMenus = [
-      {
-        'icon': Icons.analytics_outlined,
-        'label': 'Tracking Pencairan',
-        'color': Colors.indigo
-      },
-    ];
-
-    if (role == 'admin' || role == 'super_admin') {
+    if (role == 'sekretaris') {
       return [
-        ...sekretarisMenus,
-        ...bendaharaMenus,
-        ...pendidikanMenus,
-        ...adminMenus
+        {
+          'icon': Icons.people_outline,
+          'label': 'Data Santri',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.assignment_outlined,
+          'label': 'Perizinan',
+          'color': Colors.orange
+        },
+        {
+          'icon': Icons.card_membership_outlined,
+          'label': 'Kartu Digital',
+          'color': Colors.purple
+        },
+        {
+          'icon': Icons.description_outlined,
+          'label': 'Laporan',
+          'color': Colors.red
+        },
       ];
     } else if (role == 'bendahara') {
-      return bendaharaMenus;
-    } else if (role == 'sekretaris') {
-      return sekretarisMenus;
+      return [
+        {
+          'icon': Icons.payments_outlined,
+          'label': 'Data Syahriah',
+          'color': Colors.green
+        },
+        {
+          'icon': Icons.warning_amber_rounded,
+          'label': 'Cek Tunggakan',
+          'color': Colors.red
+        },
+        {
+          'icon': Icons.arrow_downward_rounded,
+          'label': 'Pemasukan',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.arrow_upward_rounded,
+          'label': 'Pengeluaran',
+          'color': Colors.orange
+        },
+        {
+          'icon': Icons.pie_chart_outline,
+          'label': 'Lap. Keuangan',
+          'color': Colors.purple
+        },
+        {
+          'icon': Icons.people_alt_outlined,
+          'label': 'Data Pegawai',
+          'color': Colors.cyan
+        },
+        {
+          'icon': Icons.attach_money_outlined,
+          'label': 'Gaji Pegawai',
+          'color': Colors.teal
+        },
+        {
+          'icon': Icons.account_balance_outlined,
+          'label': 'Penarikan Dana',
+          'color': Colors.indigo
+        },
+      ];
     } else if (role == 'pendidikan') {
-      return pendidikanMenus;
+      return [
+        {
+          'icon': Icons.assessment_outlined,
+          'label': 'E-Rapor',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.school_outlined,
+          'label': 'Ijazah Digital',
+          'color': Colors.orange
+        },
+        {
+          'icon': Icons.calendar_today_outlined,
+          'label': 'Kalender Akademik',
+          'color': Colors.red
+        },
+      ];
+    } else if (role == 'admin' || role == 'super_admin') {
+      return [
+        {
+          'icon': Icons.admin_panel_settings_outlined,
+          'label': 'Tracking Pencairan',
+          'color': Colors.redAccent
+        },
+        // Sekretaris Menus
+        {
+          'icon': Icons.people_outline,
+          'label': 'Data Santri',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.assignment_outlined,
+          'label': 'Perizinan',
+          'color': Colors.orange
+        },
+        // Bendahara Menus
+        {
+          'icon': Icons.payments_outlined,
+          'label': 'Data Syahriah',
+          'color': Colors.green
+        },
+        {
+          'icon': Icons.warning_amber_rounded,
+          'label': 'Cek Tunggakan',
+          'color': Colors.red
+        },
+        {
+          'icon': Icons.arrow_downward_rounded,
+          'label': 'Pemasukan',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.arrow_upward_rounded,
+          'label': 'Pengeluaran',
+          'color': Colors.orange
+        },
+        {
+          'icon': Icons.pie_chart_outline,
+          'label': 'Lap. Keuangan',
+          'color': Colors.purple
+        },
+        // Pendidikan Menus
+        {
+          'icon': Icons.assessment_outlined,
+          'label': 'E-Rapor',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.calendar_today_outlined,
+          'label': 'Kalender Akademik',
+          'color': Colors.red
+        },
+      ];
     }
-
-    return [
-      {'icon': Icons.help_outline, 'label': 'Bantuan', 'color': Colors.grey},
-    ];
+    return [];
   }
 
   Future<void> _navigateToMenu(String label) async {
     Widget? screen;
+
     if (label == 'Data Santri') {
       screen = const DataSantriScreen();
-    } else if (label == 'Kartu Digital') {
-      screen = const KartuDigitalGridScreen();
     } else if (label == 'Perizinan') {
       screen = const PerizinanScreen();
+    } else if (label == 'Kartu Digital') {
+      screen = const KartuDigitalGridScreen();
     } else if (label == 'Laporan') {
       screen = const ReportScreen();
-    } else if (label == 'Input Syahriah') {
-      screen = const SyahriahPaymentScreen();
+    } else if (label == 'Data Syahriah') {
+      screen = const SyahriahListScreen();
     } else if (label == 'Cek Tunggakan') {
       screen = const CekTunggakanScreen();
     } else if (label == 'Pemasukan') {
@@ -243,8 +244,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       screen = const FinancialListScreen(type: 'pengeluaran');
     } else if (label == 'Lap. Keuangan') {
       screen = const LaporanKeuanganScreen();
-    } else if (label == 'Tabungan') {
-      screen = const SavingsScreen();
     } else if (label == 'Data Pegawai') {
       screen = const PegawaiListScreen();
     } else if (label == 'Gaji Pegawai') {
@@ -255,8 +254,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       screen = const IjazahScreen();
     } else if (label == 'Kalender Akademik') {
       screen = const KalenderScreen();
-    } else if (label == 'Billing Blast') {
-      screen = const CekTunggakanScreen();
     } else if (label == 'Penarikan Dana') {
       screen = const WithdrawalScreen();
     } else if (label == 'Tracking Pencairan') {
@@ -265,11 +262,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (screen != null) {
       // WAIT for the screen to pop (user comes back), then REFRESH DATA
-      await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => screen!),
-      );
-      _fetchKpi(); // Auto-refresh logic
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => screen!),
+        );
+        _fetchKpi(); // Auto-refresh logic
+      }
     }
   }
 
