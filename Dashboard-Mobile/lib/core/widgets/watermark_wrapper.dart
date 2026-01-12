@@ -14,7 +14,8 @@ class WatermarkWrapper extends StatelessWidget {
           bottom: 20,
           left: 0,
           right: 0,
-          child: Center(
+          child: Material(
+            type: MaterialType.transparency,
             child: Opacity(
               opacity: 0.8, // Adjusted for black text to be clearly visible
               child: Column(
