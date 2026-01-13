@@ -5,6 +5,7 @@ import '../models/santri.dart';
 import 'digital_id_card_screen.dart';
 import 'add_perizinan_screen.dart';
 import 'add_edit_santri_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DataSantriScreen extends StatefulWidget {
   final bool isSelectionMode;
@@ -29,7 +30,17 @@ class _DataSantriScreenState extends State<DataSantriScreen> {
   void initState() {
     super.initState();
     _fetchFilters();
+    _fetchFilters();
     _fetchSantri();
+    _loadUserRole();
+  }
+
+  String _userRole = '';
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('user_role') ?? '';
+    });
   }
 
   Future<void> _fetchFilters() async {
@@ -196,18 +207,20 @@ class _DataSantriScreenState extends State<DataSantriScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const AddEditSantriScreen()),
-          );
-          if (result == true) _fetchSantri();
-        },
-        backgroundColor: const Color(0xFF1B5E20),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: _userRole == 'rois'
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AddEditSantriScreen()),
+                );
+                _fetchSantri();
+              },
+              backgroundColor: const Color(0xFF1B5E20),
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 
@@ -276,7 +289,7 @@ class _DataSantriScreenState extends State<DataSantriScreen> {
                       style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  if (!widget.isSelectionMode) ...[
+                  if (!widget.isSelectionMode && _userRole != 'rois') ...[
                     IconButton(
                       icon: const Icon(Icons.edit_outlined,
                           size: 20, color: Colors.blue),
@@ -338,29 +351,30 @@ class _DataSantriScreenState extends State<DataSantriScreen> {
                           style: GoogleFonts.outfit(fontSize: 12)),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AddPerizinanScreen(santri: santri),
-                          ),
-                        );
-                        if (result == true) {
-                          _fetchSantri(); // Refresh
-                        }
-                      },
-                      icon: const Icon(Icons.add_task,
-                          size: 18, color: Colors.white),
-                      label: Text('Tambah Izin',
-                          style: GoogleFonts.outfit(
-                              fontSize: 12, color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E20),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                    if (_userRole != 'rois')
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AddPerizinanScreen(santri: santri),
+                            ),
+                          );
+                          if (result == true) {
+                            _fetchSantri(); // Refresh
+                          }
+                        },
+                        icon: const Icon(Icons.add_task,
+                            size: 18, color: Colors.white),
+                        label: Text('Tambah Izin',
+                            style: GoogleFonts.outfit(
+                                fontSize: 12, color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B5E20),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

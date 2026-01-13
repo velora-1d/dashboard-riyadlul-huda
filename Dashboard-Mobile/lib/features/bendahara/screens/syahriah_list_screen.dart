@@ -107,18 +107,20 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
               icon: const Icon(Icons.payment),
               backgroundColor: const Color(0xFF1B5E20),
             )
-          : FloatingActionButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SyahriahPaymentScreen()),
-                );
-                if (result == true) _fetchRecords();
-              },
-              backgroundColor: const Color(0xFF1B5E20),
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
+          : (_userRole == 'rois')
+              ? null
+              : FloatingActionButton(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SyahriahPaymentScreen()),
+                    );
+                    if (result == true) _fetchRecords();
+                  },
+                  backgroundColor: const Color(0xFF1B5E20),
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -166,7 +168,7 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
               style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold, color: const Color(0xFF1B5E20)),
             ),
-            if (!isParent)
+            if (!isParent && _userRole != 'rois')
               PopupMenuButton(
                 onSelected: (value) async {
                   if (value == 'edit') {

@@ -80,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<Map<String, dynamic>> _getMenuItems() {
     final role = _userRole.toLowerCase();
-    if (role == 'sekretaris') {
+    if (role == 'sekretaris' || role == 'rois') {
       return [
         {
           'icon': Icons.people_outline,
@@ -103,7 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'color': Colors.red
         },
       ];
-    } else if (role == 'bendahara') {
+    } else if (role == 'bendahara' || role == 'rois') {
       return [
         {
           'icon': Icons.payments_outlined,

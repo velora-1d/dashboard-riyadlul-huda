@@ -106,7 +106,7 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
           ),
         ),
       ),
-      floatingActionButton: isParent
+      floatingActionButton: (isParent || isRois)
           ? null
           : FloatingActionButton(
               onPressed: () async {
@@ -185,7 +185,8 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.blue)),
                               ),
-                            if (!isParent)
+                            if (!isParent &&
+                                !isRois) // Apply the new condition here
                               IconButton(
                                 icon: const Icon(Icons.delete,
                                     color: Colors.red, size: 20),

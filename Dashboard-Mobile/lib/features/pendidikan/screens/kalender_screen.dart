@@ -116,7 +116,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
                                 ]
                               ],
                             ),
-                            trailing: isParent
+                            trailing: (isParent || _userRole == 'rois')
                                 ? null
                                 : Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -139,7 +139,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
                       },
                     ),
             ),
-      floatingActionButton: isParent
+      floatingActionButton: (isParent || _userRole == 'rois')
           ? null
           : FloatingActionButton(
               onPressed: () => _showEventDialog(),
