@@ -169,6 +169,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'color': Colors.teal
         },
       ];
+    } else if (role == 'wali_santri') {
+      return [
+        {
+          'icon': Icons.card_membership_outlined,
+          'label': 'Kartu Digital',
+          'color': Colors.purple
+        },
+        {
+          'icon': Icons.payments_outlined,
+          'label': 'Tagihanku',
+          'color': Colors.green
+        },
+        {
+          'icon': Icons.menu_book_rounded,
+          'label': 'Hafalan Anak',
+          'color': Colors.teal
+        },
+        {
+          'icon': Icons.assessment_outlined,
+          'label': 'Rapor Anak',
+          'color': Colors.blue
+        },
+        {
+          'icon': Icons.calendar_today_outlined,
+          'label': 'Kalender Akademik',
+          'color': Colors.red
+        },
+      ];
     } else if (role == 'admin' || role == 'super_admin') {
       return [
         {
