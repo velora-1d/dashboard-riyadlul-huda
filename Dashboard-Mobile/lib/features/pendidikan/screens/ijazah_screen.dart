@@ -161,7 +161,8 @@ class _IjazahScreenState extends State<IjazahScreen> {
                                       fontWeight: FontWeight.bold)),
                               subtitle: Text(santri.nis),
                               trailing: IconButton(
-                                icon: const Icon(Icons.print,
+                                tooltip: 'Download Ijazah',
+                                icon: const Icon(Icons.download,
                                     color: Colors.indigo),
                                 onPressed: () => _downloadIjazah(santri.id),
                               ),

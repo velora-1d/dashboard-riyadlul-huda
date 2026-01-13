@@ -4,6 +4,7 @@ class Santri {
   final String nis;
   final String kelas;
   final String kamar;
+  final String asrama;
   final String fotoPath;
   final String status;
   final String? virtualAccountNumber;
@@ -29,6 +30,7 @@ class Santri {
     required this.nis,
     required this.kelas,
     required this.kamar,
+    required this.asrama,
     this.fotoPath = '',
     this.status = 'Aktif',
     this.virtualAccountNumber,
@@ -55,7 +57,14 @@ class Santri {
       kelas: json['kelas'] is Map
           ? json['kelas']['nama_kelas']?.toString() ?? '-'
           : (json['kelas']?.toString() ?? '-'),
-      kamar: json['kamar']?.toString() ?? '-',
+      kamar: json['kobong'] is Map
+          ? json['kobong']['nama_kobong']?.toString() ??
+              json['kamar']?.toString() ??
+              '-'
+          : json['kamar']?.toString() ?? '-',
+      asrama: json['asrama'] is Map
+          ? json['asrama']['nama_asrama']?.toString() ?? '-'
+          : json['asrama']?.toString() ?? '-',
       fotoPath: json['foto_path'] ?? '',
       status: (json['is_active'] == false) ? 'Nonaktif' : 'Aktif',
       virtualAccountNumber: json['virtual_account_number']?.toString(),

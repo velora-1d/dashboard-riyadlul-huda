@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/santri.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class DigitalIdCardScreen extends StatelessWidget {
   final Santri santri;
 
@@ -28,11 +30,9 @@ class DigitalIdCardScreen extends StatelessWidget {
               _buildIdCard(),
               const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: () {
-                  // Logic to download or share card
-                },
+                onPressed: () => _downloadCard(context),
                 icon: const Icon(Icons.download_outlined),
-                label: const Text('Unduh Kartu'),
+                label: const Text('Unduh PDF (Browser)'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B5E20),
                   foregroundColor: Colors.white,
@@ -47,6 +47,23 @@ class DigitalIdCardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _downloadCard(BuildContext context) async {
+    final Uri url = Uri.parse(
+        'https://dashboard.riyadlulhuda.my.id/sekretaris/kartu-digital/${santri.id}/download');
+
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuka link download: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildIdCard() {
@@ -197,6 +214,7 @@ class DigitalIdCardScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildDetail('KELAS', santri.kelas),
+                    _buildDetail('ASRAMA', santri.asrama),
                     _buildDetail('KAMAR', santri.kamar),
                   ],
                 ),

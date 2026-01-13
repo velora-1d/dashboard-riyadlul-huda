@@ -3,9 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/models/notification_model.dart';
 import 'package:intl/intl.dart';
+
 import 'package:dio/dio.dart';
-import '../../auth/screens/login_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -28,6 +27,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> _fetchNotifications() async {
     setState(() => _isLoading = true);
     try {
+      // Ensure token is loaded
+      await _apiService.loadToken();
+
       final response = await _apiService.get('notifications');
       if (response.data['status'] == 'success') {
         final List data = response.data['data'];
@@ -40,24 +42,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        if (e is DioException && e.response?.statusCode == 401) {
-          // Token expired, logout
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
-          await _apiService.clearToken();
 
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
+        String message = 'Gagal mengambil notifikasi.';
+        if (e is DioException) {
+          if (e.response?.statusCode == 401) {
+            message = 'Sesi habis. Silakan Logout dan Login ulang.';
+          } else {
+            message =
+                'Koneksi bermasalah: ${e.response?.statusCode ?? "Network Error"}';
           }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal mengambil notifikasi: $e')),
-          );
         }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: e is DioException && e.response?.statusCode == 401
+                ? Colors.orange
+                : Colors.red,
+          ),
+        );
       }
     }
   }

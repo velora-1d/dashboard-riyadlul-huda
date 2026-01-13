@@ -14,7 +14,8 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
-        android:label="dashboard_mobile"
+    <application
+        android:label="Management Riyadlul Huda"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

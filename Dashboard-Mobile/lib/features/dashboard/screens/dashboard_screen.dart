@@ -9,17 +9,18 @@ import '../../bendahara/screens/pegawai_list_screen.dart';
 
 import '../../sekretaris/screens/data_santri_screen.dart';
 import '../../sekretaris/screens/perizinan_screen.dart';
-import 'notification_screen.dart';
 import '../../sekretaris/screens/kartu_digital_grid_screen.dart';
 import '../../sekretaris/screens/report_screen.dart';
 import '../../pendidikan/screens/erapor_screen.dart';
 import '../../pendidikan/screens/ijazah_screen.dart';
+import '../../pendidikan/screens/hafalan_list_screen.dart';
 import '../../pendidikan/screens/kalender_screen.dart';
 import '../../bendahara/screens/laporan_keuangan_screen.dart';
 import '../../../core/services/api_service.dart';
 import '../../bendahara/screens/syahriah_list_screen.dart';
 import '../../bendahara/screens/withdrawal_screen.dart';
 import '../../admin/screens/withdrawal_tracking_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String? role;
@@ -248,6 +249,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       screen = const PegawaiListScreen();
     } else if (label == 'Gaji Pegawai') {
       screen = const GajiHistoryScreen();
+    } else if (label == 'Data Hafalan') {
+      screen = const HafalanListScreen();
     } else if (label == 'E-Rapor') {
       screen = const EraporScreen();
     } else if (label == 'Ijazah Digital') {
@@ -280,18 +283,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text('Dashboard',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationScreen()),
-              );
-            },
-          ),
-        ],
       ),
       drawer: _buildDrawer(context),
       body: RefreshIndicator(
@@ -599,6 +590,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const Divider(),
+          // Hubungi Admin Button
+          ListTile(
+            leading:
+                const Icon(Icons.support_agent_rounded, color: Colors.blue),
+            title: Text('Hubungi Admin',
+                style: GoogleFonts.outfit(color: Colors.blue)),
+            onTap: _launchWhatsApp,
+          ),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: Text('Keluar', style: GoogleFonts.outfit(color: Colors.red)),
@@ -620,6 +619,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _launchWhatsApp() async {
+    final Uri url = Uri.parse(
+        'https://wa.me/6281320442174?text=Halo%20Admin,%20saya%20butuh%20bantuan%20terkait%20Aplikasi%20Dashboard.');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka WhatsApp')),
+        );
+      }
+    }
   }
 
   Widget _buildMenuCard({

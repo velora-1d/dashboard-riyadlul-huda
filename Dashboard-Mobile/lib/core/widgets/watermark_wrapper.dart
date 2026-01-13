@@ -7,42 +7,28 @@ class WatermarkWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        child,
-        Positioned(
-          bottom: 20,
-          left: 0,
-          right: 0,
+        Expanded(child: child),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.only(bottom: 16, top: 8),
+          color: const Color(0xFF1B5E20), // Changed container color
           child: Material(
-            type: MaterialType.transparency,
-            child: Opacity(
-              opacity: 0.8, // Adjusted for black text to be clearly visible
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Management Riyadlul Huda',
-                    style: GoogleFonts.tinos(
-                      // Serif font similar to Times New Roman
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Dibuat Oleh : Mahin Utsman Nawawi, S.H',
-                    style: GoogleFonts.tinos(
-                      // Serif font similar to Times New Roman
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
+            type: MaterialType
+                .transparency, // Keep transparency for Material if container has color
+            child: DefaultTextStyle(
+              style: GoogleFonts.tinos(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white, // Changed text color to white
+                fontStyle: FontStyle.italic,
+                decoration:
+                    TextDecoration.none, // Vital to remove yellow underline
+              ),
+              child: const Text(
+                'Dibuat Oleh : Mahin Utsman Nawawi, S.H',
+                textAlign: TextAlign.center,
               ),
             ),
           ),
