@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import '../models/santri.dart';
 
@@ -18,6 +19,22 @@ class _AddPerizinanScreenState extends State<AddPerizinanScreen> {
   DateTime _tglPulang = DateTime.now();
   DateTime _tglKembali = DateTime.now().add(const Duration(days: 3));
   bool _isSubmitting = false;
+  String _userRole = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_role') ?? '';
+      });
+    }
+  }
 
   Future<void> _selectDate(BuildContext context, bool isPulang) async {
     final DateTime? picked = await showDatePicker(
@@ -103,9 +120,12 @@ class _AddPerizinanScreenState extends State<AddPerizinanScreen> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Contoh: Acara keluarga, Sakit, dsb.',
+                  filled: _userRole == 'rois',
+                  fillColor: _userRole == 'rois' ? Colors.grey.shade100 : null,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
+                enabled: _userRole != 'rois',
                 validator: (v) =>
                     v!.isEmpty ? 'Alasan tidak boleh kosong' : null,
               ),
@@ -121,10 +141,15 @@ class _AddPerizinanScreenState extends State<AddPerizinanScreen> {
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _selectDate(context, true),
+                          onTap: _userRole == 'rois'
+                              ? null
+                              : () => _selectDate(context, true),
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
+                              color: _userRole == 'rois'
+                                  ? Colors.grey.shade100
+                                  : null,
                               border: Border.all(color: Colors.grey),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -151,10 +176,15 @@ class _AddPerizinanScreenState extends State<AddPerizinanScreen> {
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _selectDate(context, false),
+                          onTap: _userRole == 'rois'
+                              ? null
+                              : () => _selectDate(context, false),
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
+                              color: _userRole == 'rois'
+                                  ? Colors.grey.shade100
+                                  : null,
                               border: Border.all(color: Colors.grey),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -174,24 +204,49 @@ class _AddPerizinanScreenState extends State<AddPerizinanScreen> {
                 ],
               ),
               const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B5E20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+              if (_userRole != 'rois')
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B5E20),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text('Simpan Data Izin',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                   ),
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text('Simpan Data Izin',
-                          style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
+                )
+              else
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue.shade700),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Mode Baca Saja',
+                        style: GoogleFonts.outfit(
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),

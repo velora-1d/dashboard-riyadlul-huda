@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import '../models/perizinan.dart';
 import 'data_santri_screen.dart';
@@ -19,10 +20,22 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
   bool _isLoading = true;
   String _selectedStatus = 'Semua';
 
+  String _userRole = '';
+
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _fetchPerizinan();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_role') ?? '';
+      });
+    }
   }
 
   Future<void> _fetchPerizinan() async {
@@ -74,36 +87,38 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // 1. Select Santri
-          final santri = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  const DataSantriScreen(isSelectionMode: true),
+      floatingActionButton: _userRole == 'rois'
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                // 1. Select Santri
+                final santri = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const DataSantriScreen(isSelectionMode: true),
+                  ),
+                );
+
+                // 2. If Santri selected, Open Add Form
+                if (santri != null) {
+                  if (!context.mounted) return;
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddPerizinanScreen(santri: santri),
+                    ),
+                  );
+
+                  // 3. Refresh list if permission successfully added
+                  if (result == true) {
+                    _fetchPerizinan();
+                  }
+                }
+              },
+              backgroundColor: const Color(0xFF1B5E20),
+              child: const Icon(Icons.add, color: Colors.white),
             ),
-          );
-
-          // 2. If Santri selected, Open Add Form
-          if (santri != null) {
-            if (!context.mounted) return;
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AddPerizinanScreen(santri: santri),
-              ),
-            );
-
-            // 3. Refresh list if permission successfully added
-            if (result == true) {
-              _fetchPerizinan();
-            }
-          }
-        },
-        backgroundColor: const Color(0xFF1B5E20),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 
@@ -250,7 +265,7 @@ class _PerizinanScreenState extends State<PerizinanScreen> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            if (showApproval) ...[
+            if (showApproval && _userRole != 'rois') ...[
               const SizedBox(height: 16),
               Row(
                 children: [

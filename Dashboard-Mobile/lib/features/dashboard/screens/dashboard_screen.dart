@@ -61,8 +61,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     try {
       String endpoint = 'sekretaris/dashboard';
-      if (_userRole.toLowerCase() == 'bendahara') {
+      final role = _userRole.toLowerCase();
+      if (role == 'bendahara') {
         endpoint = 'bendahara/dashboard';
+      } else if (role == 'rois') {
+        // Rois can access secretary stats by default
+        endpoint = 'sekretaris/dashboard';
       }
 
       final response = await _apiService.get(endpoint);
@@ -103,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'color': Colors.red
         },
       ];
-    } else if (role == 'bendahara' || role == 'rois') {
+    } else if (role == 'bendahara') {
       return [
         {
           'icon': Icons.payments_outlined,

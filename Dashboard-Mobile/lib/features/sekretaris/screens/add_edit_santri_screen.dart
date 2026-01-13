@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import '../models/santri.dart';
 
@@ -16,6 +17,8 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
   bool _isInitLoading = true;
+
+  String _userRole = '';
 
   // Form controllers
   late TextEditingController _nameController;
@@ -84,10 +87,18 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
     _selectedAsramaId = widget.santri?.asramaId?.toString();
     _selectedKobongId = widget.santri?.kobongId?.toString();
 
+    _loadUserRole();
     _fetchOptions();
   }
 
-  // ... (keeping initState same)
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_role') ?? '';
+      });
+    }
+  }
 
   Future<void> _fetchOptions() async {
     setState(() => _isInitLoading = true);
@@ -277,7 +288,9 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                                 child: Text(label),
                               ))
                           .toList(),
-                      onChanged: (val) => setState(() => _selectedGender = val),
+                      onChanged: _userRole == 'rois'
+                          ? null
+                          : (val) => setState(() => _selectedGender = val),
                       validator: (val) =>
                           val == null ? 'Jenis kelamin wajib diisi' : null,
                     ),
@@ -298,8 +311,9 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                           child: Text(item['nama_kelas'] ?? '-'),
                         );
                       }).toList(),
-                      onChanged: (val) =>
-                          setState(() => _selectedKelasId = val),
+                      onChanged: _userRole == 'rois'
+                          ? null
+                          : (val) => setState(() => _selectedKelasId = val),
                       validator: (val) =>
                           val == null ? 'Kelas wajib diisi' : null,
                     ),
@@ -320,12 +334,14 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                           child: Text(item['nama_asrama'] ?? '-'),
                         );
                       }).toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedAsramaId = val;
-                          if (val != null) _filterKobong(val);
-                        });
-                      },
+                      onChanged: _userRole == 'rois'
+                          ? null
+                          : (val) {
+                              setState(() {
+                                _selectedAsramaId = val;
+                                if (val != null) _filterKobong(val);
+                              });
+                            },
                       validator: (val) =>
                           val == null ? 'Asrama wajib diisi' : null,
                     ),
@@ -346,7 +362,8 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                           child: Text(item['nama_kobong'] ?? '-'),
                         );
                       }).toList(),
-                      onChanged: _selectedAsramaId == null
+                      onChanged: (_selectedAsramaId == null ||
+                              _userRole == 'rois')
                           ? null
                           : (val) => setState(() => _selectedKobongId = val),
                       validator: (val) =>
@@ -357,30 +374,56 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
                     _buildDatePicker('Tanggal Masuk', _tanggalMasukController),
 
                     const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B5E20),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 4,
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : Text(
-                                'Simpan Data',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                    if (_userRole != 'rois')
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B5E20),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            elevation: 4,
+                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
+                              : Text(
+                                  'Simpan Data',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Colors.blue.shade700),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Mode Baca Saja',
+                              style: GoogleFonts.outfit(
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -400,10 +443,13 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, size: 20),
+          filled: _userRole == 'rois',
+          fillColor: _userRole == 'rois' ? Colors.grey.shade100 : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
+        enabled: _userRole != 'rois',
         validator: (value) =>
             value == null || value.isEmpty ? '$label tidak boleh kosong' : null,
       ),
@@ -419,37 +465,41 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: const Icon(Icons.calendar_today, size: 20),
+          filled: _userRole == 'rois',
+          fillColor: _userRole == 'rois' ? Colors.grey.shade100 : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        onTap: () async {
-          DateTime initialDate = DateTime.now();
-          if (controller.text.isNotEmpty) {
-            try {
-              // Try parse DD-MM-YYYY
-              final parts = controller.text.split('-');
-              if (parts.length == 3) {
-                initialDate = DateTime(int.parse(parts[2]), int.parse(parts[1]),
-                    int.parse(parts[0]));
-              }
-            } catch (_) {}
-          }
+        onTap: _userRole == 'rois'
+            ? null
+            : () async {
+                DateTime initialDate = DateTime.now();
+                if (controller.text.isNotEmpty) {
+                  try {
+                    // Try parse DD-MM-YYYY
+                    final parts = controller.text.split('-');
+                    if (parts.length == 3) {
+                      initialDate = DateTime(int.parse(parts[2]),
+                          int.parse(parts[1]), int.parse(parts[0]));
+                    }
+                  } catch (_) {}
+                }
 
-          DateTime? pickedDate = await showDatePicker(
-            context: context,
-            initialDate: initialDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-          );
-          if (pickedDate != null) {
-            setState(() {
-              // Set as DD-MM-YYYY
-              controller.text =
-                  "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
-            });
-          }
-        },
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: initialDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    // Set as DD-MM-YYYY
+                    controller.text =
+                        "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+                  });
+                }
+              },
         validator: (v) => v!.isEmpty ? '$label tidak boleh kosong' : null,
       ),
     );
