@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import 'syahriah_payment_screen.dart';
 
@@ -14,6 +15,7 @@ class SyahriahListScreen extends StatefulWidget {
 class _SyahriahListScreenState extends State<SyahriahListScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = true;
+  String _userRole = '';
   List<dynamic> _records = [];
   final _currencyFormat =
       NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
@@ -21,19 +23,23 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _fetchRecords();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('user_role') ?? '';
+    });
   }
 
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
-      // Need a new endpoint or reuse existing one.
-      // Assuming 'bendahara/syahriah' GET returns list.
-      // If not, we might need to verify backend route.
-      // Let's assume standard REST: GET /bendahara/syahriah
-      // If that doesn't exist, we will add it.
-      // Based on previous checks, we haven't seen 'getSyahriah' in BendaharaController.
-      // We will check routes next. For now, writing UI assuming backend support.
+      // Check if Parent, use specific endpoint if needed, or filter.
+      // For now reusing same endpoint, backend should filter by user if Wali.
+      // If backend doesn't filter automatically yet, we might see all data (not ideal but fixable in backend).
       final response = await _apiService.get('bendahara/syahriah');
       if (response.data['status'] == 'success') {
         setState(() {
@@ -86,44 +92,78 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isParent = _userRole == 'wali_santri';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Syahriah',
+        title: Text(isParent ? 'Riwayat Pembayaran' : 'Data Syahriah',
             style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const SyahriahPaymentScreen()),
-          );
-          if (result == true) _fetchRecords();
-        },
-        backgroundColor: const Color(0xFF1B5E20),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: isParent
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                showModalBottomSheet(
+                    context: context,
+                    builder: (context) => Container(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Pembayaran Online',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 10),
+                              Text(
+                                  'Fitur Pembayaran Otomatis (Midtrans) segera hadir. \nUntuk saat ini silakan hubungi bagian keuangan.',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.outfit()),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.check),
+                                  label: const Text('Mengerti'))
+                            ],
+                          ),
+                        ));
+              },
+              label: const Text('Bayar Sekarang'),
+              icon: const Icon(Icons.payment),
+              backgroundColor: const Color(0xFF1B5E20),
+            )
+          : FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SyahriahPaymentScreen()),
+                );
+                if (result == true) _fetchRecords();
+              },
+              backgroundColor: const Color(0xFF1B5E20),
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _fetchRecords,
               child: _records.isEmpty
                   ? Center(
-                      child: Text('Belum ada data syahriah',
+                      child: Text('Belum ada data pembayaran',
                           style: GoogleFonts.outfit(color: Colors.grey)))
                   : ListView.builder(
                       itemCount: _records.length,
                       padding: const EdgeInsets.all(16),
                       itemBuilder: (context, index) {
                         final record = _records[index];
-                        return _buildCard(record);
+                        return _buildCard(record, isParent);
                       },
                     ),
             ),
     );
   }
 
-  Widget _buildCard(dynamic record) {
+  Widget _buildCard(dynamic record, bool isParent) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -150,25 +190,26 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
               style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold, color: const Color(0xFF1B5E20)),
             ),
-            PopupMenuButton(
-              onSelected: (value) async {
-                if (value == 'edit') {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            SyahriahPaymentScreen(syahriah: record)),
-                  );
-                  if (result == true) _fetchRecords();
-                } else if (value == 'delete') {
-                  _deleteSyahriah(record['id']);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Hapus')),
-              ],
-            ),
+            if (!isParent)
+              PopupMenuButton(
+                onSelected: (value) async {
+                  if (value == 'edit') {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              SyahriahPaymentScreen(syahriah: record)),
+                    );
+                    if (result == true) _fetchRecords();
+                  } else if (value == 'delete') {
+                    _deleteSyahriah(record['id']);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'delete', child: Text('Hapus')),
+                ],
+              ),
           ],
         ),
       ),

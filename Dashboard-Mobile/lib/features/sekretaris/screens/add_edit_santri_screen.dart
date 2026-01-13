@@ -29,6 +29,7 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
   late TextEditingController _ortuController;
   late TextEditingController _hpOrtuController;
   late TextEditingController _tanggalMasukController;
+  late TextEditingController _tanggalLahirController; // Added
 
   // Dropdown values
   String? _selectedGender;
@@ -62,6 +63,22 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         text: widget.santri?.tanggalMasuk ??
             DateTime.now().toString().split(' ')[0]);
 
+    // Format Tanggal Lahir for Display (YYYY-MM-DD -> DD-MM-YYYY)
+    String initialTanggalLahir = '';
+    if (widget.santri?.tanggalLahir != null) {
+      try {
+        final parts = widget.santri!.tanggalLahir!.split('-');
+        if (parts.length == 3) {
+          initialTanggalLahir = '${parts[2]}-${parts[1]}-${parts[0]}';
+        } else {
+          initialTanggalLahir = widget.santri!.tanggalLahir!;
+        }
+      } catch (e) {
+        initialTanggalLahir = widget.santri!.tanggalLahir!;
+      }
+    }
+    _tanggalLahirController = TextEditingController(text: initialTanggalLahir);
+
     _selectedGender = widget.santri?.gender;
     _selectedKelasId = widget.santri?.kelasId?.toString();
     _selectedAsramaId = widget.santri?.asramaId?.toString();
@@ -70,37 +87,47 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
     _fetchOptions();
   }
 
+  // ... (keeping initState same)
+
   Future<void> _fetchOptions() async {
+    setState(() => _isInitLoading = true);
     try {
-      final response = await _apiService.get('sekretaris/get-filters');
-      if (response.data['status'] == 'success') {
+      final kelasRes = await _apiService.get('sekretaris/kelas');
+      final asramaRes = await _apiService.get('sekretaris/asrama');
+      final kobongRes = await _apiService.get('sekretaris/kobong');
+
+      if (mounted) {
         setState(() {
-          _kelasOptions = response.data['data']['kelas'];
-          _asramaOptions = response.data['data']['asrama'];
-          _kobongOptions = response.data['data']['kobong'];
-          _isInitLoading = false;
-          _filterKobong();
+          _kelasOptions = kelasRes.data['data'] ?? [];
+          _asramaOptions = asramaRes.data['data'] ?? [];
+          _kobongOptions = kobongRes.data['data'] ?? [];
+
+          // Initial filter if editing
+          if (_selectedAsramaId != null) {
+            _filterKobong(_selectedAsramaId!);
+          }
         });
       }
     } catch (e) {
       debugPrint('Error fetching options: $e');
-      setState(() => _isInitLoading = false);
+    } finally {
+      if (mounted) setState(() => _isInitLoading = false);
     }
   }
 
-  void _filterKobong() {
-    if (_selectedAsramaId == null) {
-      _filteredKobong = [];
-    } else {
+  void _filterKobong(String asramaId) {
+    setState(() {
       _filteredKobong = _kobongOptions
-          .where((k) => k['asrama_id'].toString() == _selectedAsramaId)
+          .where((k) => k['asrama_id'].toString() == asramaId)
           .toList();
-    }
-    // Reset kobong if not in filtered list
-    if (_selectedKobongId != null &&
-        !_filteredKobong.any((k) => k['id'].toString() == _selectedKobongId)) {
-      _selectedKobongId = null;
-    }
+
+      // Reset kobong if the selected one is not in the new filtered list
+      if (_selectedKobongId != null) {
+        bool exists =
+            _filteredKobong.any((k) => k['id'].toString() == _selectedKobongId);
+        if (!exists) _selectedKobongId = null;
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -108,6 +135,15 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
 
     setState(() => _isLoading = true);
     try {
+      // Convert Display Date (DD-MM-YYYY) to API Date (YYYY-MM-DD)
+      String submitTanggalLahir = _tanggalLahirController.text;
+      if (submitTanggalLahir.contains('-')) {
+        final parts = submitTanggalLahir.split('-');
+        if (parts.length == 3) {
+          submitTanggalLahir = '${parts[2]}-${parts[1]}-${parts[0]}';
+        }
+      }
+
       final data = {
         'nama_santri': _nameController.text,
         'nis': _nisController.text,
@@ -124,6 +160,7 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
         'kelas_id': _selectedKelasId,
         'gender': _selectedGender,
         'tanggal_masuk': _tanggalMasukController.text,
+        'tanggal_lahir': submitTanggalLahir, // Use converted date
       };
 
       final response = widget.santri == null
@@ -155,128 +192,211 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isInitLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.santri == null ? 'Tambah Santri' : 'Edit Santri',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text(
+          widget.santri == null ? 'Tambah Santri' : 'Edit Santri',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle('Informasi Pribadi'),
-              _buildTextField('Nama Lengkap', _nameController, Icons.person),
-              _buildTextField('NIS', _nisController, Icons.badge),
-              _buildDropdown(
-                  'Gender',
-                  _selectedGender,
-                  [
-                    const DropdownMenuItem(
-                        value: 'putra', child: Text('Putra')),
-                    const DropdownMenuItem(
-                        value: 'putri', child: Text('Putri')),
+      body: _isInitLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Data Diri',
+                        style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                        'Nama Lengkap', _nameController, Icons.person),
+                    _buildTextField(
+                        'NIS', _nisController, Icons.card_membership,
+                        keyboardType: TextInputType.number),
+
+                    const SizedBox(height: 16),
+                    Text('Data Kelahiran & Login',
+                        style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    _buildDatePicker(
+                        'Tanggal Lahir (DD-MM-YYYY)', _tanggalLahirController),
+
+                    const SizedBox(height: 16),
+                    Text('Alamat',
+                        style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    _buildTextField('Negara', _negaraController, Icons.flag),
+                    _buildTextField(
+                        'Provinsi', _provinsiController, Icons.map_outlined),
+                    _buildTextField(
+                        'Kota/Kabupaten', _kotaController, Icons.location_city),
+                    _buildTextField(
+                        'Kecamatan', _kecamatanController, Icons.location_on),
+                    _buildTextField(
+                        'Desa/Kampung', _desaController, Icons.home_work),
+                    _buildTextField('RT/RW', _rtRwController, Icons.signpost),
+
+                    const SizedBox(height: 16),
+                    Text('Orang Tua / Wali',
+                        style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    _buildTextField('Nama Orang Tua', _ortuController,
+                        Icons.family_restroom),
+                    _buildTextField(
+                        'No HP Orang Tua', _hpOrtuController, Icons.phone,
+                        keyboardType: TextInputType.phone),
+
+                    const SizedBox(height: 16),
+                    Text('Data Akademik & Asrama',
+                        style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+
+                    // Gender Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: InputDecoration(
+                        labelText: 'Jenis Kelamin',
+                        prefixIcon: const Icon(Icons.wc, size: 20),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      items: ['Laki-laki', 'Perempuan']
+                          .map((label) => DropdownMenuItem(
+                                value: label,
+                                child: Text(label),
+                              ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedGender = val),
+                      validator: (val) =>
+                          val == null ? 'Jenis kelamin wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Kelas Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedKelasId,
+                      decoration: InputDecoration(
+                        labelText: 'Kelas',
+                        prefixIcon: const Icon(Icons.class_, size: 20),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: _kelasOptions.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item['id'].toString(),
+                          child: Text(item['nama_kelas'] ?? '-'),
+                        );
+                      }).toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedKelasId = val),
+                      validator: (val) =>
+                          val == null ? 'Kelas wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Asrama Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedAsramaId,
+                      decoration: InputDecoration(
+                        labelText: 'Asrama',
+                        prefixIcon: const Icon(Icons.apartment, size: 20),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: _asramaOptions.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item['id'].toString(),
+                          child: Text(item['nama_asrama'] ?? '-'),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedAsramaId = val;
+                          if (val != null) _filterKobong(val);
+                        });
+                      },
+                      validator: (val) =>
+                          val == null ? 'Asrama wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Kobong Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedKobongId,
+                      decoration: InputDecoration(
+                        labelText: 'Kobong (Kamar)',
+                        prefixIcon: const Icon(Icons.meeting_room, size: 20),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: _filteredKobong.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item['id'].toString(),
+                          child: Text(item['nama_kobong'] ?? '-'),
+                        );
+                      }).toList(),
+                      onChanged: _selectedAsramaId == null
+                          ? null
+                          : (val) => setState(() => _selectedKobongId = val),
+                      validator: (val) =>
+                          val == null ? 'Kobong wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildDatePicker('Tanggal Masuk', _tanggalMasukController),
+
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B5E20),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : Text(
+                                'Simpan Data',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
-                  (v) => setState(() => _selectedGender = v)),
-              _buildDatePicker('Tanggal Masuk', _tanggalMasukController),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Alamat'),
-              _buildTextField('Provinsi', _provinsiController, Icons.map),
-              _buildTextField(
-                  'Kota/Kabupaten', _kotaController, Icons.location_city),
-              _buildTextField(
-                  'Kecamatan', _kecamatanController, Icons.location_on),
-              _buildTextField('Desa/Kampung', _desaController, Icons.home),
-              _buildTextField('RT/RW', _rtRwController, Icons.signpost),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Orang Tua / Wali'),
-              _buildTextField(
-                  'Nama Ortu/Wali', _ortuController, Icons.family_restroom),
-              _buildTextField(
-                  'No. HP Ortu/Wali', _hpOrtuController, Icons.phone),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Penempatan'),
-              _buildDropdown(
-                  'Kelas',
-                  _selectedKelasId,
-                  _kelasOptions
-                      .map((k) => DropdownMenuItem(
-                          value: k['id'].toString(),
-                          child: Text(k['nama_kelas'])))
-                      .toList(),
-                  (v) => setState(() => _selectedKelasId = v)),
-              _buildDropdown(
-                  'Asrama',
-                  _selectedAsramaId,
-                  _asramaOptions
-                      .map((a) => DropdownMenuItem(
-                          value: a['id'].toString(),
-                          child: Text(a['nama_asrama'])))
-                      .toList(), (v) {
-                setState(() {
-                  _selectedAsramaId = v;
-                  _filterKobong();
-                });
-              }),
-              _buildDropdown(
-                  'Kobong/Kamar',
-                  _selectedKobongId,
-                  _filteredKobong
-                      .map((k) => DropdownMenuItem(
-                          value: k['id'].toString(),
-                          child: Text('Kobong ${k['nomor_kobong']}')))
-                      .toList(),
-                  (v) => setState(() => _selectedKobongId = v)),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B5E20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text('Simpan Data',
-                          style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
                 ),
               ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, top: 8),
-      child: Text(title,
-          style: GoogleFonts.outfit(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B5E20))),
+            ),
     );
   }
 
   Widget _buildTextField(
-      String label, TextEditingController controller, IconData icon) {
+      String label, TextEditingController controller, IconData icon,
+      {TextInputType keyboardType = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, size: 20),
@@ -284,26 +404,8 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        validator: (v) => v!.isEmpty ? '$label tidak boleh kosong' : null,
-      ),
-    );
-  }
-
-  Widget _buildDropdown(String label, String? value,
-      List<DropdownMenuItem<String>> items, ValueChanged<String?> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        items: items,
-        onChanged: onChanged,
-        validator: (v) => v == null ? 'Pilih $label' : null,
+        validator: (value) =>
+            value == null || value.isEmpty ? '$label tidak boleh kosong' : null,
       ),
     );
   }
@@ -322,15 +424,29 @@ class _AddEditSantriScreenState extends State<AddEditSantriScreen> {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         onTap: () async {
+          DateTime initialDate = DateTime.now();
+          if (controller.text.isNotEmpty) {
+            try {
+              // Try parse DD-MM-YYYY
+              final parts = controller.text.split('-');
+              if (parts.length == 3) {
+                initialDate = DateTime(int.parse(parts[2]), int.parse(parts[1]),
+                    int.parse(parts[0]));
+              }
+            } catch (_) {}
+          }
+
           DateTime? pickedDate = await showDatePicker(
             context: context,
-            initialDate: DateTime.tryParse(controller.text) ?? DateTime.now(),
+            initialDate: initialDate,
             firstDate: DateTime(2000),
             lastDate: DateTime(2100),
           );
           if (pickedDate != null) {
             setState(() {
-              controller.text = pickedDate.toString().split(' ')[0];
+              // Set as DD-MM-YYYY
+              controller.text =
+                  "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
             });
           }
         },

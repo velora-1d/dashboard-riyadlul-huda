@@ -23,6 +23,7 @@ class Santri {
   final int? kelasId;
   final String? gender;
   final String? tanggalMasuk;
+  final String? tanggalLahir; // Added
 
   Santri({
     required this.id,
@@ -47,6 +48,7 @@ class Santri {
     this.kelasId,
     this.gender,
     this.tanggalMasuk,
+    this.tanggalLahir, // Added
   });
 
   factory Santri.fromJson(Map<String, dynamic> json) {
@@ -81,6 +83,7 @@ class Santri {
       kelasId: json['kelas_id'],
       gender: json['gender'],
       tanggalMasuk: json['tanggal_masuk'],
+      tanggalLahir: json['tanggal_lahir'], // Added
     );
   }
 
@@ -101,6 +104,7 @@ class Santri {
       'kelas_id': kelasId,
       'gender': gender,
       'tanggal_masuk': tanggalMasuk,
+      'tanggal_lahir': tanggalLahir, // Added
     };
   }
 }

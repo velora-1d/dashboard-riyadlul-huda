@@ -163,6 +163,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'label': 'Kalender Akademik',
           'color': Colors.red
         },
+        {
+          'icon': Icons.menu_book_rounded,
+          'label': 'Data Hafalan',
+          'color': Colors.teal
+        },
       ];
     } else if (role == 'admin' || role == 'super_admin') {
       return [
@@ -219,6 +224,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'label': 'Kalender Akademik',
           'color': Colors.red
         },
+        {
+          'icon': Icons.menu_book_rounded,
+          'label': 'Data Hafalan',
+          'color': Colors.teal
+        },
       ];
     }
     return [];
@@ -261,6 +271,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       screen = const WithdrawalScreen();
     } else if (label == 'Tracking Pencairan') {
       screen = const WithdrawalTrackingScreen();
+    }
+
+    // Parent Navigation Handlers
+    else if (label == 'Tagihanku') {
+      // Reuse Syahriah Screen but maybe read-only or specific view
+      // For now point to SyahriahListScreen, assuming it handles role check internally or we pass a flag
+      screen = const SyahriahListScreen();
+    } else if (label == 'Hafalan Anak') {
+      screen = const HafalanListScreen();
+    } else if (label == 'Rapor Anak') {
+      screen = const EraporScreen();
     }
 
     if (screen != null) {
