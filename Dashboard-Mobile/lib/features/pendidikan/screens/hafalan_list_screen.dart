@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import '../models/hafalan.dart';
 import 'input_hafalan_screen.dart';
@@ -17,11 +18,20 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
   bool _isLoading = true;
   List<Hafalan> _hafalanList = [];
   String _jenis = 'Quran'; // Filter
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _fetchHafalan();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('user_role') ?? '';
+    });
   }
 
   Future<void> _fetchHafalan() async {
@@ -76,6 +86,8 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isParent = _userRole == 'wali_santri';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Data Hafalan',
@@ -94,15 +106,19 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const InputHafalanScreen()));
-          if (result == true) _fetchHafalan();
-        },
-        backgroundColor: const Color(0xFF1B5E20),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: isParent
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const InputHafalanScreen()));
+                if (result == true) _fetchHafalan();
+              },
+              backgroundColor: const Color(0xFF1B5E20),
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _hafalanList.isEmpty
@@ -117,14 +133,16 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
-                        onTap: () async {
-                          final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      InputHafalanScreen(hafalan: item)));
-                          if (result == true) _fetchHafalan();
-                        },
+                        onTap: isParent
+                            ? null
+                            : () async {
+                                final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            InputHafalanScreen(hafalan: item)));
+                                if (result == true) _fetchHafalan();
+                              },
                         leading: CircleAvatar(
                           backgroundColor: item.jenis == 'Quran'
                               ? Colors.green[100]
@@ -167,11 +185,12 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.blue)),
                               ),
-                            IconButton(
-                              icon: const Icon(Icons.delete,
-                                  color: Colors.red, size: 20),
-                              onPressed: () => _deleteHafalan(item.id),
-                            )
+                            if (!isParent)
+                              IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red, size: 20),
+                                onPressed: () => _deleteHafalan(item.id),
+                              )
                           ],
                         ),
                       ),

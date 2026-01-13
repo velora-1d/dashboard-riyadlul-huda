@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import '../models/pendidikan_models.dart';
 
@@ -15,11 +16,21 @@ class _KalenderScreenState extends State<KalenderScreen> {
   final ApiService _apiService = ApiService();
   List<KalenderEvent> _events = [];
   bool _isLoading = true;
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _fetchEvents();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userRole = prefs.getString('user_role') ?? '';
+      _fetchEvents(); // Moved here or keep async
+    });
   }
 
   Future<void> _fetchEvents() async {
@@ -41,6 +52,8 @@ class _KalenderScreenState extends State<KalenderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isParent = _userRole == 'wali_santri';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Kalender Akademik',
@@ -103,32 +116,36 @@ class _KalenderScreenState extends State<KalenderScreen> {
                                 ]
                               ],
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.blue),
-                                  onPressed: () =>
-                                      _showEventDialog(event: event),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () => _deleteEvent(event.id),
-                                ),
-                              ],
-                            ),
+                            trailing: isParent
+                                ? null
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit,
+                                            color: Colors.blue),
+                                        onPressed: () =>
+                                            _showEventDialog(event: event),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () => _deleteEvent(event.id),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         );
                       },
                     ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showEventDialog(),
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: isParent
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showEventDialog(),
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.add),
+            ),
     );
   }
 

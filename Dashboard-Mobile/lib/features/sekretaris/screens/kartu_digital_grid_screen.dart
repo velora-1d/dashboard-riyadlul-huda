@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/services/api_service.dart';
 import '../models/santri.dart';
 import 'digital_id_card_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class KartuDigitalGridScreen extends StatefulWidget {
   const KartuDigitalGridScreen({super.key});
@@ -25,17 +26,35 @@ class _KartuDigitalGridScreenState extends State<KartuDigitalGridScreen> {
   Future<void> _fetchSantri() async {
     setState(() => _isLoading = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final role = prefs.getString('user_role');
+
       final response = await _apiService.get('sekretaris/santri');
       if (response.data['status'] == 'success') {
         final List data = response.data['data'];
-        setState(() {
-          _santriList = data.map((e) => Santri.fromJson(e)).toList();
-          _isLoading = false;
-        });
+        final List<Santri> result =
+            data.map((e) => Santri.fromJson(e)).toList();
+
+        if (mounted) {
+          setState(() {
+            _santriList = result;
+            _isLoading = false;
+          });
+
+          // Auto-redirect if Parent and data is available (Logic: User asked for "1 aja dia doang")
+          if (role == 'wali_santri' && _santriList.isNotEmpty) {
+            // Use replacement to avoid back-nav to empty grid
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        DigitalIdCardScreen(santri: _santriList.first)));
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error fetching santri for cards: $e');
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

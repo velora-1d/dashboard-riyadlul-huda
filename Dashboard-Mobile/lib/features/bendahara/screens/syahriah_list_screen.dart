@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/api_service.dart';
 import 'syahriah_payment_screen.dart';
+import 'payment_webview_screen.dart';
 
 class SyahriahListScreen extends StatefulWidget {
   const SyahriahListScreen({super.key});
@@ -101,32 +102,7 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
       ),
       floatingActionButton: isParent
           ? FloatingActionButton.extended(
-              onPressed: () {
-                showModalBottomSheet(
-                    context: context,
-                    builder: (context) => Container(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Pembayaran Online',
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 10),
-                              Text(
-                                  'Fitur Pembayaran Otomatis (Midtrans) segera hadir. \nUntuk saat ini silakan hubungi bagian keuangan.',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.outfit()),
-                              const SizedBox(height: 20),
-                              ElevatedButton.icon(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(Icons.check),
-                                  label: const Text('Mengerti'))
-                            ],
-                          ),
-                        ));
-              },
+              onPressed: () => _initiatePayment(),
               label: const Text('Bayar Sekarang'),
               icon: const Icon(Icons.payment),
               backgroundColor: const Color(0xFF1B5E20),
@@ -214,5 +190,86 @@ class _SyahriahListScreenState extends State<SyahriahListScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _initiatePayment() async {
+    final result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (ctx) {
+          final amountController = TextEditingController(text: '150000');
+          final monthController = TextEditingController(
+              text: DateFormat('MMMM', 'id').format(DateTime.now()));
+          final yearController =
+              TextEditingController(text: DateTime.now().year.toString());
+
+          return AlertDialog(
+            title: const Text('Bayar Syahriah'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Nominal (Rp)'),
+                ),
+                TextField(
+                  controller: monthController,
+                  decoration: const InputDecoration(
+                      labelText: 'Bulan (Contoh: Januari)'),
+                ),
+                TextField(
+                  controller: yearController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Tahun'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Batal')),
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx, {
+                      'amount': amountController.text,
+                      'month': monthController.text,
+                      'year': yearController.text
+                    });
+                  },
+                  child: const Text('Bayar')),
+            ],
+          );
+        });
+
+    if (result != null) {
+      if (mounted) setState(() => _isLoading = true);
+      try {
+        final response = await _apiService.post('payment/snap-token', data: {
+          'amount': result['amount'],
+          'item_name': 'Syahriah ${result['month']} ${result['year']}',
+          'month': result['month'],
+          'year': result['year']
+        });
+
+        if (response.data['status'] == 'success') {
+          final redirectUrl = response.data['redirect_url'];
+          if (mounted) {
+            setState(() => _isLoading = false);
+            await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => PaymentWebviewScreen(url: redirectUrl)));
+            _fetchRecords();
+          }
+        }
+      } catch (e) {
+        debugPrint('Payment Error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Gagal: $e')));
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 }
