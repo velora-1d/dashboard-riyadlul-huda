@@ -87,6 +87,7 @@ class _HafalanListScreenState extends State<HafalanListScreen> {
   @override
   Widget build(BuildContext context) {
     bool isParent = _userRole == 'wali_santri';
+    bool isRois = _userRole == 'rois';
 
     return Scaffold(
       appBar: AppBar(
